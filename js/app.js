@@ -70,6 +70,7 @@
       `Cupón: ${data.code}\n` +
       `Descuento: ${data.discount_percent}%`;
     return `https://wa.me/${cfg.WHATSAPP_NUMBER}?text=${encodeURIComponent(mensaje)}`;
+  }
 
   function setupCopyButton(root, code) {
     const btn = root.querySelector("[data-action='copy-coupon']");
@@ -90,11 +91,14 @@
     const closeBtn = modal ? modal.querySelector("[data-action='close-terms']") : null;
     const body = modal ? modal.querySelector("[data-field='terms-body']") : null;
     let loaded = false;
+    let trigger = null;
 
-    async function open() {
+    async function open(event) {
       if (!modal) return;
+      trigger = event && event.currentTarget ? event.currentTarget : document.activeElement;
       modal.classList.add("is-open");
       modal.setAttribute("aria-hidden", "false");
+      if (closeBtn) closeBtn.focus();
       if (!loaded && body) {
         const terms = await window.ErimarAPI.getTerms();
         body.textContent =
@@ -108,6 +112,7 @@
       if (!modal) return;
       modal.classList.remove("is-open");
       modal.setAttribute("aria-hidden", "true");
+      if (trigger && typeof trigger.focus === "function") trigger.focus();
     }
 
     openBtns.forEach((btn) => btn.addEventListener("click", open));

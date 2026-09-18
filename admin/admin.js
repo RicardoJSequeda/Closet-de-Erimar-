@@ -174,9 +174,10 @@
 
   function fillCustomerSelect(list) {
     const select = el("qr-customer");
-    select.innerHTML = list
+    select.innerHTML = '<option value="">Selecciona una clienta</option>' + list
       .map((c) => `<option value="${c.id}">${escapeHtml(c.full_name)}</option>`)
       .join("");
+    select.disabled = !list.length;
   }
 
   // ---------------------------------------------------------
@@ -199,11 +200,17 @@
   }
 
   function fillCampaignSelects(list) {
-    const options = list
+    const activeCampaigns = list.filter((c) => c.active);
+    const qrOptions = '<option value="">Selecciona una campaña activa</option>' + activeCampaigns
       .map((c) => `<option value="${c.id}">${escapeHtml(c.name)}${c.active ? "" : " (inactiva)"}</option>`)
       .join("");
-    el("qr-campaign").innerHTML = options;
-    el("stats-campaign").innerHTML = options;
+    const statsOptions = '<option value="">Selecciona una campaña</option>' + list
+      .map((c) => `<option value="${c.id}">${escapeHtml(c.name)}${c.active ? "" : " (inactiva)"}</option>`)
+      .join("");
+    el("qr-campaign").innerHTML = qrOptions;
+    el("qr-campaign").disabled = !activeCampaigns.length;
+    el("stats-campaign").innerHTML = statsOptions;
+    el("stats-campaign").disabled = !list.length;
   }
 
   function renderCampaignList(list) {
@@ -291,14 +298,19 @@
   // ---------------------------------------------------------
   // Crear QR
   // ---------------------------------------------------------
-  function buildQrImageUrl(data, size) {
-    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(data)}`;
+  async function createQrDataUrl(data) {
+    if (!window.QRCode) throw new Error("qr_generator_not_loaded");
+    return window.QRCode.toDataURL(data, {
+      width: 600,
+      margin: 2,
+      errorCorrectionLevel: "M",
+    });
   }
 
-  async function fetchQrBlob(qrImageUrl) {
-    const response = await fetch(qrImageUrl);
-    if (!response.ok) throw new Error("qr_fetch_failed");
-    return await response.blob();
+  async function dataUrlToBlob(dataUrl) {
+    const response = await fetch(dataUrl);
+    if (!response.ok) throw new Error("qr_data_url_failed");
+    return response.blob();
   }
 
   function showQrNote(message) {
@@ -338,7 +350,19 @@
 
       const baseUrl = new URL("../", window.location.href).toString();
       const qrUrl = `${baseUrl}?qr=${encodeURIComponent(data.token)}`;
-      const qrImageUrl = buildQrImageUrl(qrUrl, 300);
+      let qrImageUrl;
+      try {
+        qrImageUrl = await createQrDataUrl(qrUrl);
+      } catch (err) {
+        console.error(err);
+        el("qr-result-customer").textContent = customerName;
+        el("qr-result-campaign").textContent = campaign ? campaign.name : "";
+        el("qr-url").textContent = qrUrl;
+        el("qr-canvas-holder").replaceChildren();
+        el("qr-result").hidden = false;
+        showQrNote("No se pudo dibujar el QR, pero este enlace es válido. Cópialo y vuelve a intentarlo antes de cerrar esta página.");
+        return;
+      }
 
       el("qr-result-customer").textContent = customerName;
       el("qr-result-campaign").textContent = campaign ? campaign.name : "";
@@ -353,7 +377,7 @@
 
       el("qr-download").onclick = async () => {
         try {
-          const blob = await fetchQrBlob(qrImageUrl);
+          const blob = await dataUrlToBlob(qrImageUrl);
           const objectUrl = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = objectUrl;
@@ -364,9 +388,8 @@
           URL.revokeObjectURL(objectUrl);
         } catch (err) {
           console.error(err);
-          // Si la descarga directa falla (ej. sin conexión al servicio de
-          // imagen), abrimos el QR en una pestaña nueva para que puedas
-          // guardarlo manualmente con clic derecho / mantener presionado.
+          // El QR vive localmente en una URL data:, por lo que se puede
+          // guardar manualmente incluso si falla la descarga automática.
           window.open(qrImageUrl, "_blank");
           showQrNote("Se abrió el QR en una pestaña nueva: mantén presionada la imagen (o clic derecho) para guardarla.");
         }
@@ -374,7 +397,7 @@
 
       el("qr-share").onclick = async () => {
         try {
-          const blob = await fetchQrBlob(qrImageUrl);
+          const blob = await dataUrlToBlob(qrImageUrl);
           const file = new File([blob], fileName, { type: blob.type || "image/png" });
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
