@@ -150,7 +150,10 @@ begin
   loop
     v_code := 'ERIMAR-' || upper(substr(encode(gen_random_bytes(6), 'hex'), 1, 5));
     v_attempts := v_attempts + 1;
-    exit when not exists (select 1 from coupons where code = v_code) or v_attempts > 10;
+    exit when not exists (select 1 from coupons where code = v_code);
+    if v_attempts >= 10 then
+      raise exception 'could_not_generate_unique_coupon_code';
+    end if;
   end loop;
 
   insert into coupons (
@@ -221,9 +224,22 @@ declare
   v_token text;
   v_hash text;
   v_card_id uuid;
+  v_campaign_active boolean;
 begin
   if not is_admin() then
     raise exception 'not_authorized';
+  end if;
+
+  if not exists (select 1 from customers where id = p_customer_id) then
+    return jsonb_build_object('ok', false, 'error', 'customer_not_found');
+  end if;
+
+  select active into v_campaign_active from campaigns where id = p_campaign_id;
+  if not found then
+    return jsonb_build_object('ok', false, 'error', 'campaign_not_found');
+  end if;
+  if not v_campaign_active then
+    return jsonb_build_object('ok', false, 'error', 'campaign_inactive');
   end if;
 
   v_token := encode(gen_random_bytes(24), 'base64');
