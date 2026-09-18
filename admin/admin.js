@@ -1,0 +1,553 @@
+// =========================================================
+// Closet de Erimar — Panel administrativo (admin/admin.js)
+// =========================================================
+// Todo lo sensible pasa por RPC SECURITY DEFINER o por tablas
+// protegidas con RLS que solo un usuario en la tabla `admins`
+// puede leer/escribir. Este archivo NUNCA decide descuentos,
+// vigencias ni inventario: solo llama al backend y pinta el
+// resultado.
+
+(function () {
+  const cfg = window.ERIMAR_CONFIG;
+  const client = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+
+  const el = (id) => document.getElementById(id);
+
+  const loginScreen = el("login-screen");
+  const adminApp = el("admin-app");
+
+  // ---------------------------------------------------------
+  // Autenticación
+  // ---------------------------------------------------------
+  async function checkIsAdmin() {
+    const { data, error } = await client
+      .from("admins")
+      .select("user_id")
+      .limit(1);
+    if (error) return false;
+    return Array.isArray(data) && data.length > 0;
+  }
+
+  async function boot() {
+    const { data: sessionData } = await client.auth.getSession();
+    if (sessionData && sessionData.session) {
+      const isAdmin = await checkIsAdmin();
+      if (isAdmin) {
+        loginScreen.hidden = true;
+        adminApp.hidden = false;
+        initAdminApp();
+        return;
+      } else {
+        await client.auth.signOut();
+      }
+    }
+    loginScreen.hidden = false;
+    adminApp.hidden = true;
+  }
+
+  el("login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = el("login-email").value.trim();
+    const password = el("login-password").value;
+    const errorEl = el("login-error");
+    errorEl.hidden = true;
+
+    const { error } = await client.auth.signInWithPassword({ email, password });
+    if (error) {
+      errorEl.textContent = "Correo o contraseña incorrectos.";
+      errorEl.hidden = false;
+      return;
+    }
+    const isAdmin = await checkIsAdmin();
+    if (!isAdmin) {
+      await client.auth.signOut();
+      errorEl.textContent = "Esta cuenta no tiene acceso al panel administrativo.";
+      errorEl.hidden = false;
+      return;
+    }
+    loginScreen.hidden = true;
+    adminApp.hidden = false;
+    initAdminApp();
+  });
+
+  el("logout-btn").addEventListener("click", async () => {
+    await client.auth.signOut();
+    window.location.reload();
+  });
+
+  // ---------------------------------------------------------
+  // Tabs
+  // ---------------------------------------------------------
+  function setupTabs() {
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("is-active"));
+        document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("is-active"));
+        btn.classList.add("is-active");
+        document.getElementById("tab-" + btn.dataset.tab).classList.add("is-active");
+      });
+    });
+  }
+
+  let appInitialized = false;
+
+  function initAdminApp() {
+    if (appInitialized) return;
+    appInitialized = true;
+    setupTabs();
+    loadCustomers();
+    loadCampaignsEverywhere();
+    setupCustomerForm();
+    setupQrForm();
+    setupCampaignForm();
+    setupValidateForm();
+    setupStatsCampaignSelect();
+    loadCouponsTable();
+  }
+
+  // ---------------------------------------------------------
+  // Clientes
+  // ---------------------------------------------------------
+  let customersCache = [];
+
+  async function loadCustomers() {
+    const { data, error } = await client
+      .from("customers")
+      .select("id, full_name, phone, notes, created_at")
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error(error);
+      return;
+    }
+    customersCache = data || [];
+    renderCustomerList(customersCache);
+    fillCustomerSelect(customersCache);
+  }
+
+  function renderCustomerList(list) {
+    const container = el("customer-list");
+    if (!list.length) {
+      container.innerHTML = '<p class="empty-state">Todavía no hay clientas registradas.</p>';
+      return;
+    }
+    container.innerHTML = list
+      .map(
+        (c) => `
+        <div class="list-row">
+          <div>
+            <p class="list-row-title">${escapeHtml(c.full_name)}</p>
+            <p class="list-row-sub">${escapeHtml(c.phone || "")}</p>
+          </div>
+        </div>`
+      )
+      .join("");
+  }
+
+  el("customer-search").addEventListener("input", (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    const filtered = customersCache.filter((c) => c.full_name.toLowerCase().includes(q));
+    renderCustomerList(filtered);
+  });
+
+  function setupCustomerForm() {
+    el("customer-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const full_name = el("customer-name").value.trim();
+      const phone = el("customer-phone").value.trim();
+      const notes = el("customer-notes").value.trim();
+      if (!full_name) return;
+
+      const { error } = await client.from("customers").insert({
+        full_name,
+        phone: phone || null,
+        notes: notes || null,
+      });
+      if (error) {
+        alert("No se pudo guardar la clienta.");
+        console.error(error);
+        return;
+      }
+      el("customer-form").reset();
+      loadCustomers();
+    });
+  }
+
+  function fillCustomerSelect(list) {
+    const select = el("qr-customer");
+    select.innerHTML = list
+      .map((c) => `<option value="${c.id}">${escapeHtml(c.full_name)}</option>`)
+      .join("");
+  }
+
+  // ---------------------------------------------------------
+  // Campañas
+  // ---------------------------------------------------------
+  let campaignsCache = [];
+
+  async function loadCampaignsEverywhere() {
+    const { data, error } = await client
+      .from("campaigns")
+      .select("id, name, active, max_coupons, duration_days, created_at")
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error(error);
+      return;
+    }
+    campaignsCache = data || [];
+    fillCampaignSelects(campaignsCache);
+    renderCampaignList(campaignsCache);
+  }
+
+  function fillCampaignSelects(list) {
+    const options = list
+      .map((c) => `<option value="${c.id}">${escapeHtml(c.name)}${c.active ? "" : " (inactiva)"}</option>`)
+      .join("");
+    el("qr-campaign").innerHTML = options;
+    el("stats-campaign").innerHTML = options;
+  }
+
+  function renderCampaignList(list) {
+    const container = el("campaign-list");
+    if (!list.length) {
+      container.innerHTML = '<p class="empty-state">Aún no has creado ninguna campaña.</p>';
+      return;
+    }
+    container.innerHTML = list
+      .map(
+        (c) => `
+        <div class="list-row">
+          <div>
+            <p class="list-row-title">${escapeHtml(c.name)} ${c.active ? "" : "· inactiva"}</p>
+            <p class="list-row-sub">${c.max_coupons} cupones · vigencia ${c.duration_days} días</p>
+          </div>
+          <div class="list-row-actions">
+            <select data-campaign-id="${c.id}" class="duration-select">
+              <option value="15" ${c.duration_days === 15 ? "selected" : ""}>15 días</option>
+              <option value="20" ${c.duration_days === 20 ? "selected" : ""}>20 días</option>
+              <option value="30" ${c.duration_days === 30 ? "selected" : ""}>30 días</option>
+            </select>
+          </div>
+        </div>`
+      )
+      .join("");
+
+    container.querySelectorAll(".duration-select").forEach((sel) => {
+      sel.addEventListener("change", async () => {
+        const campaignId = sel.dataset.campaignId;
+        const { error } = await client.rpc("update_campaign_duration", {
+          p_campaign_id: campaignId,
+          p_duration_days: parseInt(sel.value, 10),
+        });
+        if (error) {
+          alert("No se pudo actualizar la vigencia.");
+          console.error(error);
+        }
+      });
+    });
+  }
+
+  function setupCampaignForm() {
+    el("campaign-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = el("campaign-name").value.trim();
+      const duration = parseInt(el("campaign-duration").value, 10);
+      const t5 = parseInt(el("tier-5").value || "0", 10);
+      const t10 = parseInt(el("tier-10").value || "0", 10);
+      const t15 = parseInt(el("tier-15").value || "0", 10);
+      const maxCoupons = t5 + t10 + t15;
+
+      if (!name || maxCoupons <= 0) {
+        alert("Revisa el nombre y la distribución de cupones.");
+        return;
+      }
+
+      const tiers = [
+        { discount_percent: 5, total: t5 },
+        { discount_percent: 10, total: t10 },
+        { discount_percent: 15, total: t15 },
+      ].filter((t) => t.total > 0);
+
+      const { data, error } = await client.rpc("create_campaign", {
+        p_name: name,
+        p_max_coupons: maxCoupons,
+        p_duration_days: duration,
+        p_tiers: tiers,
+      });
+
+      if (error || !data || !data.ok) {
+        alert("No se pudo crear la campaña.");
+        console.error(error || data);
+        return;
+      }
+
+      el("campaign-form").reset();
+      el("tier-5").value = 6;
+      el("tier-10").value = 3;
+      el("tier-15").value = 1;
+      loadCampaignsEverywhere();
+    });
+  }
+
+  // ---------------------------------------------------------
+  // Crear QR
+  // ---------------------------------------------------------
+  function buildQrImageUrl(data, size) {
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(data)}`;
+  }
+
+  async function fetchQrBlob(qrImageUrl) {
+    const response = await fetch(qrImageUrl);
+    if (!response.ok) throw new Error("qr_fetch_failed");
+    return await response.blob();
+  }
+
+  function showQrNote(message) {
+    const note = el("qr-action-note");
+    note.textContent = message;
+    note.hidden = false;
+  }
+
+  function setupQrForm() {
+    el("qr-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const customerId = el("qr-customer").value;
+      const campaignId = el("qr-campaign").value;
+      if (!customerId || !campaignId) return;
+
+      const submitBtn = e.target.querySelector("button[type='submit']");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Generando…";
+
+      const { data, error } = await client.rpc("create_qr_card", {
+        p_customer_id: customerId,
+        p_campaign_id: campaignId,
+      });
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Generar QR";
+
+      if (error || !data || !data.ok) {
+        alert("No se pudo generar el QR. Revisa la consola para más detalle.");
+        console.error(error || data);
+        return;
+      }
+
+      const customer = customersCache.find((c) => c.id === customerId);
+      const campaign = campaignsCache.find((c) => c.id === campaignId);
+      const customerName = customer ? customer.full_name : "clienta";
+
+      const baseUrl = new URL("../", window.location.href).toString();
+      const qrUrl = `${baseUrl}?qr=${encodeURIComponent(data.token)}`;
+      const qrImageUrl = buildQrImageUrl(qrUrl, 300);
+
+      el("qr-result-customer").textContent = customerName;
+      el("qr-result-campaign").textContent = campaign ? campaign.name : "";
+      el("qr-url").textContent = qrUrl;
+      el("qr-result").hidden = false;
+      el("qr-action-note").hidden = true;
+
+      const holder = el("qr-canvas-holder");
+      holder.innerHTML = `<img src="${qrImageUrl}" alt="Código QR de ${escapeHtml(customerName)}" width="220" height="220" />`;
+
+      const fileName = `qr-${customerName.replace(/\s+/g, "-").toLowerCase()}.png`;
+
+      el("qr-download").onclick = async () => {
+        try {
+          const blob = await fetchQrBlob(qrImageUrl);
+          const objectUrl = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = objectUrl;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(objectUrl);
+        } catch (err) {
+          console.error(err);
+          // Si la descarga directa falla (ej. sin conexión al servicio de
+          // imagen), abrimos el QR en una pestaña nueva para que puedas
+          // guardarlo manualmente con clic derecho / mantener presionado.
+          window.open(qrImageUrl, "_blank");
+          showQrNote("Se abrió el QR en una pestaña nueva: mantén presionada la imagen (o clic derecho) para guardarla.");
+        }
+      };
+
+      el("qr-share").onclick = async () => {
+        try {
+          const blob = await fetchQrBlob(qrImageUrl);
+          const file = new File([blob], fileName, { type: blob.type || "image/png" });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: "Closet de Erimar",
+              text: `Tarjeta QR de ${customerName}`,
+            });
+            return;
+          }
+          if (navigator.share) {
+            await navigator.share({ title: "Closet de Erimar", text: `Tarjeta QR de ${customerName}`, url: qrUrl });
+            return;
+          }
+          throw new Error("share_not_supported");
+        } catch (err) {
+          console.error(err);
+          window.open(qrImageUrl, "_blank");
+          showQrNote("Tu navegador no permite compartir directamente: se abrió el QR en una pestaña nueva.");
+        }
+      };
+    });
+  }
+
+  // ---------------------------------------------------------
+  // Estadísticas
+  // ---------------------------------------------------------
+  function setupStatsCampaignSelect() {
+    el("stats-campaign").addEventListener("change", loadStats);
+  }
+
+  async function loadStats() {
+    const campaignId = el("stats-campaign").value;
+    if (!campaignId) return;
+    const { data, error } = await client.rpc("get_campaign_stats", {
+      p_campaign_id: campaignId,
+    });
+    if (error) {
+      console.error(error);
+      return;
+    }
+    const s = data.stats;
+    el("stats-summary").innerHTML = `
+      <div class="stat-box"><p class="stat-num">${s.total_slots}</p><p class="stat-label">Cupones totales</p></div>
+      <div class="stat-box"><p class="stat-num">${s.assigned}</p><p class="stat-label">Asignados</p></div>
+      <div class="stat-box"><p class="stat-num">${s.available}</p><p class="stat-label">Disponibles</p></div>
+      <div class="stat-box"><p class="stat-num">${s.used}</p><p class="stat-label">Utilizados</p></div>
+      <div class="stat-box"><p class="stat-num">${s.expired}</p><p class="stat-label">Vencidos</p></div>
+    `;
+    const inv = data.inventory || [];
+    el("stats-inventory").innerHTML = inv
+      .map(
+        (t) => `
+        <div class="stat-box">
+          <p class="stat-num">${t.remaining}/${t.total}</p>
+          <p class="stat-label">${t.discount_percent}% disponibles</p>
+        </div>`
+      )
+      .join("");
+  }
+
+  // Cargar stats automáticamente cuando ya haya campañas listadas.
+  const originalFillCampaignSelects = fillCampaignSelects;
+  fillCampaignSelects = function (list) {
+    originalFillCampaignSelects(list);
+    if (list.length) loadStats();
+  };
+
+  // ---------------------------------------------------------
+  // Validar cupón
+  // ---------------------------------------------------------
+  function setupValidateForm() {
+    el("validate-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const code = el("validate-code").value.trim();
+      if (!code) return;
+
+      const { data, error } = await client.rpc("validate_coupon", { p_code: code });
+      const resultEl = el("validate-result");
+
+      if (error || !data || !data.ok) {
+        resultEl.hidden = false;
+        resultEl.innerHTML = `<p class="empty-state">No se encontró ese cupón.</p>`;
+        return;
+      }
+
+      resultEl.hidden = false;
+      resultEl.innerHTML = `
+        <p><strong>Cliente:</strong> ${escapeHtml(data.customer_name)}</p>
+        <p><strong>Descuento:</strong> ${data.discount_percent}%</p>
+        <p><strong>Estado:</strong> ${translateStatus(data.status)}</p>
+        <p><strong>Vence:</strong> ${new Date(data.expires_at).toLocaleDateString("es-CO")}</p>
+        ${
+          data.status === "available"
+            ? `<button class="btn btn--primary" id="mark-used-btn">✓ Marcar como utilizado</button>`
+            : ""
+        }
+      `;
+
+      const markBtn = document.getElementById("mark-used-btn");
+      if (markBtn) {
+        markBtn.addEventListener("click", async () => {
+          const { data: markData, error: markError } = await client.rpc("mark_coupon_used", {
+            p_coupon_id: data.id,
+          });
+          if (markError || !markData || !markData.ok) {
+            alert("No se pudo marcar el cupón como utilizado.");
+            return;
+          }
+          el("validate-form").dispatchEvent(new Event("submit"));
+          loadCouponsTable();
+        });
+      }
+    });
+  }
+
+  function translateStatus(status) {
+    return { available: "Disponible", used: "Utilizado", expired: "Vencido" }[status] || status;
+  }
+
+  // ---------------------------------------------------------
+  // Tabla de cupones
+  // ---------------------------------------------------------
+  async function loadCouponsTable() {
+    const { data, error } = await client
+      .from("coupons")
+      .select("id, code, discount_percent, status, issued_at, expires_at, customers(full_name)")
+      .order("issued_at", { ascending: false })
+      .limit(300);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    const tbody = document.querySelector("#coupons-table tbody");
+    tbody.innerHTML = (data || [])
+      .map(
+        (row) => `
+        <tr>
+          <td>${escapeHtml(row.customers ? row.customers.full_name : "")}</td>
+          <td>${escapeHtml(row.code)}</td>
+          <td>${row.discount_percent}%</td>
+          <td>${new Date(row.issued_at).toLocaleDateString("es-CO")}</td>
+          <td>${new Date(row.expires_at).toLocaleDateString("es-CO")}</td>
+          <td><span class="status-pill status-${row.status}">${translateStatus(row.status)}</span></td>
+          <td>${
+            row.status === "available"
+              ? `<button class="btn btn--ghost btn--small" data-mark-id="${row.id}">Marcar usado</button>`
+              : ""
+          }</td>
+        </tr>`
+      )
+      .join("");
+
+    tbody.querySelectorAll("[data-mark-id]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const { error: markError } = await client.rpc("mark_coupon_used", {
+          p_coupon_id: btn.dataset.markId,
+        });
+        if (markError) {
+          alert("No se pudo marcar el cupón como utilizado.");
+          return;
+        }
+        loadCouponsTable();
+      });
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str == null ? "" : String(str);
+    return div.innerHTML;
+  }
+
+  boot();
+})();

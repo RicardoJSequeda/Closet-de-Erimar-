@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Closet de Erimar — Tu sorpresa</title>
+<meta name="description" content="Una sorpresa especial de Closet de Erimar para ti." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/animations.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- Sin código QR en la URL -->
+  <section id="screen-no-qr" class="screen">
+    <div class="panel panel--soft">
+      <p class="wordmark">Closet de Erimar</p>
+      <h1 class="panel-title">Esta sorpresa vive en tu tarjeta</h1>
+      <p class="panel-text">
+        Escanea el código QR de tu tarjeta Closet de Erimar para descubrir
+        lo que tenemos para ti.
+      </p>
+    </div>
+  </section>
+
+  <!-- Cargando -->
+  <section id="screen-loading" class="screen is-active">
+    <div class="loader" role="status" aria-live="polite">
+      <span class="loader-dot"></span>
+      <span class="loader-dot"></span>
+      <span class="loader-dot"></span>
+      <span class="sr-only">Preparando tu sorpresa…</span>
+    </div>
+  </section>
+
+  <!-- Error / tarjeta inválida / campaña agotada -->
+  <section id="screen-error" class="screen">
+    <div class="panel panel--soft">
+      <p class="wordmark">Closet de Erimar</p>
+      <p id="error-message" class="panel-text panel-text--emphasis"></p>
+    </div>
+  </section>
+
+  <!-- Intro antes del sobre -->
+  <section id="screen-intro" class="screen">
+    <div class="intro">
+      <p class="wordmark wordmark--large">Closet de Erimar</p>
+      <p class="intro-title">Tenemos una sorpresa<br />especialmente para ti 💕</p>
+      <p class="intro-subtitle">Gracias por elegirnos.</p>
+    </div>
+  </section>
+
+  <!-- Sobre interactivo -->
+  <section id="screen-envelope" class="screen">
+    <div class="envelope-stage">
+      <p id="envelope-tap-hint" class="envelope-hint">Toca para descubrir<br />tu sorpresa</p>
+
+      <button
+        id="envelope"
+        class="envelope"
+        type="button"
+        aria-label="Toca para abrir tu sorpresa"
+      >
+        <span class="envelope-back"></span>
+        <span id="envelope-card" class="envelope-card"></span>
+        <span class="envelope-flap"></span>
+        <span id="envelope-seal" class="envelope-seal">✦</span>
+        <span id="envelope-sparkles" class="envelope-sparkles" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i>
+        </span>
+      </button>
+
+      <div id="envelope-reveal-panel" class="reveal-panel">
+        <p class="reveal-eyebrow">✨ ¡Tenemos algo para ti, <span data-field="greeting-name"></span>! ✨</p>
+        <p class="reveal-thanks">Gracias por ser parte de nuestra familia.</p>
+
+        <div class="coupon-card">
+          <p class="coupon-discount"><span data-field="discount"></span></p>
+          <p class="coupon-label">de descuento en tu próxima compra</p>
+          <p class="coupon-code" data-field="code"></p>
+          <p class="coupon-status-note" data-field="status-note" hidden></p>
+          <button class="btn btn--ghost" type="button" data-action="copy-coupon">📋 Copiar mi cupón</button>
+          <p class="coupon-expiry">Válido hasta: <span data-field="expires"></span></p>
+        </div>
+
+        <a class="btn btn--primary" data-field="return-cta" href="#" hidden>🛍️ Quiero volver a comprar</a>
+        <p class="share-hint" data-field="share-hint" hidden>
+          Toma una captura de este cupón y envíala junto con tu pedido para validarlo 💕
+        </p>
+        <button class="btn btn--link" type="button" data-action="open-terms">Términos y condiciones</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Visita de retorno: mismo cupón, sin animación de regalo -->
+  <section id="screen-returning" class="screen">
+    <div class="panel">
+      <p class="wordmark">Closet de Erimar</p>
+      <p class="reveal-thanks">Hola nuevamente, <span data-field="greeting-name"></span> 💕</p>
+      <p class="panel-text">Esta es tu sorpresa:</p>
+
+      <div class="coupon-card">
+        <p class="coupon-discount"><span data-field="discount"></span></p>
+        <p class="coupon-label">de descuento en tu próxima compra</p>
+        <p class="coupon-code" data-field="code"></p>
+        <p class="coupon-status-note" data-field="status-note" hidden></p>
+        <button class="btn btn--ghost" type="button" data-action="copy-coupon">📋 Copiar mi cupón</button>
+        <p class="coupon-expiry">Válido hasta: <span data-field="expires"></span></p>
+      </div>
+
+      <a class="btn btn--primary" data-field="return-cta" href="#" hidden>🛍️ Quiero volver a comprar</a>
+      <p class="share-hint" data-field="share-hint" hidden>
+        Toma una captura de este cupón y envíala junto con tu pedido para validarlo 💕
+      </p>
+      <button class="btn btn--link" type="button" data-action="open-terms">Términos y condiciones</button>
+    </div>
+  </section>
+
+</div>
+
+<!-- Modal de términos y condiciones -->
+<div id="terms-modal" class="modal" aria-hidden="true">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="terms-title">
+    <h2 id="terms-title">Términos de tu cupón</h2>
+    <p data-field="terms-body" class="terms-body"></p>
+    <button class="btn btn--primary" type="button" data-action="close-terms">Entendido</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/coupon.js"></script>
+<script src="js/animation.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

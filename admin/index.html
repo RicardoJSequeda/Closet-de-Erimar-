@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Closet de Erimar — Panel administrativo</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+<!-- Puerta de acceso: sin sesión válida no se ve nada más -->
+<section id="login-screen" class="auth-screen">
+  <form id="login-form" class="auth-card">
+    <p class="wordmark">Closet de Erimar</p>
+    <h1>Panel administrativo</h1>
+    <label>
+      Correo
+      <input type="email" id="login-email" required autocomplete="username" />
+    </label>
+    <label>
+      Contraseña
+      <input type="password" id="login-password" required autocomplete="current-password" />
+    </label>
+    <p id="login-error" class="form-error" hidden></p>
+    <button type="submit" class="btn btn--primary">Ingresar</button>
+  </form>
+</section>
+
+<!-- Panel real, oculto hasta confirmar sesión + membresía admin -->
+<div id="admin-app" class="admin-app" hidden>
+  <header class="admin-header">
+    <p class="wordmark">Closet de Erimar · Admin</p>
+    <button id="logout-btn" class="btn btn--ghost btn--small">Cerrar sesión</button>
+  </header>
+
+  <nav class="admin-tabs">
+    <button class="tab-btn is-active" data-tab="clientes">Clientes</button>
+    <button class="tab-btn" data-tab="qr">Crear QR</button>
+    <button class="tab-btn" data-tab="campanas">Campañas</button>
+    <button class="tab-btn" data-tab="cupones">Cupones</button>
+  </nav>
+
+  <!-- CLIENTES -->
+  <section id="tab-clientes" class="tab-panel is-active">
+    <div class="card">
+      <h2>Nueva clienta</h2>
+      <form id="customer-form" class="stacked-form">
+        <label>Nombre completo <input type="text" id="customer-name" required /></label>
+        <label>WhatsApp / teléfono <input type="text" id="customer-phone" /></label>
+        <label>Notas <textarea id="customer-notes" rows="2"></textarea></label>
+        <button type="submit" class="btn btn--primary">Guardar clienta</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row">
+        <h2>Clientas</h2>
+        <input type="search" id="customer-search" placeholder="Buscar por nombre…" />
+      </div>
+      <div id="customer-list" class="list"></div>
+    </div>
+  </section>
+
+  <!-- CREAR QR -->
+  <section id="tab-qr" class="tab-panel">
+    <div class="card">
+      <h2>Generar tarjeta QR</h2>
+      <form id="qr-form" class="stacked-form">
+        <label>Clienta
+          <select id="qr-customer" required></select>
+        </label>
+        <label>Campaña
+          <select id="qr-campaign" required></select>
+        </label>
+        <button type="submit" class="btn btn--primary">Generar QR</button>
+      </form>
+      <div id="qr-result" class="qr-result" hidden>
+        <p class="qr-meta">Cliente: <strong id="qr-result-customer"></strong></p>
+        <p class="qr-meta">Campaña: <strong id="qr-result-campaign"></strong></p>
+        <p class="qr-meta">Token: oculto</p>
+        <p class="qr-meta">Estado: Activo</p>
+        <div id="qr-canvas-holder" class="qr-canvas-holder"></div>
+        <p class="qr-url" id="qr-url"></p>
+        <div class="qr-actions">
+          <button type="button" id="qr-download" class="btn btn--ghost">Descargar QR</button>
+          <button type="button" id="qr-share" class="btn btn--ghost">Compartir QR</button>
+        </div>
+        <p id="qr-action-note" class="qr-note" hidden></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAMPAÑAS -->
+  <section id="tab-campanas" class="tab-panel">
+    <div class="card">
+      <h2>Nueva campaña</h2>
+      <form id="campaign-form" class="stacked-form">
+        <label>Nombre <input type="text" id="campaign-name" required placeholder="Septiembre 2026" /></label>
+        <label>Vigencia del cupón (días)
+          <select id="campaign-duration">
+            <option value="15">15 días</option>
+            <option value="20" selected>20 días</option>
+            <option value="30">30 días</option>
+          </select>
+        </label>
+        <fieldset class="tiers-fieldset">
+          <legend>Distribución de cupones</legend>
+          <label>5% — cantidad <input type="number" id="tier-5" min="0" value="6" /></label>
+          <label>10% — cantidad <input type="number" id="tier-10" min="0" value="3" /></label>
+          <label>15% — cantidad <input type="number" id="tier-15" min="0" value="1" /></label>
+        </fieldset>
+        <button type="submit" class="btn btn--primary">Crear campaña</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Campañas existentes</h2>
+      <div id="campaign-list" class="list"></div>
+    </div>
+  </section>
+
+  <!-- CUPONES -->
+  <section id="tab-cupones" class="tab-panel">
+    <div class="card">
+      <div class="card-header-row">
+        <h2>Estadísticas</h2>
+        <select id="stats-campaign"></select>
+      </div>
+      <div id="stats-summary" class="stats-grid"></div>
+      <h3>Inventario</h3>
+      <div id="stats-inventory" class="stats-grid"></div>
+    </div>
+
+    <div class="card">
+      <h2>Validar cupón</h2>
+      <form id="validate-form" class="inline-form">
+        <input type="text" id="validate-code" placeholder="ERIMAR-XXXXX" required />
+        <button type="submit" class="btn btn--primary">Buscar</button>
+      </form>
+      <div id="validate-result" class="validate-result" hidden></div>
+    </div>
+
+    <div class="card">
+      <h2>Todos los cupones</h2>
+      <div class="table-scroll">
+        <table class="data-table" id="coupons-table">
+          <thead>
+            <tr>
+              <th>Cliente</th><th>Cupón</th><th>Descuento</th>
+              <th>Emitido</th><th>Vence</th><th>Estado</th><th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../js/config.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

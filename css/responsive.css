@@ -1,0 +1,35 @@
+/* =========================================================
+   Closet de Erimar — responsive.css
+   ========================================================= */
+
+/* Teléfonos pequeños */
+@media (max-width: 360px) {
+  .panel { padding: 30px 22px; }
+  .coupon-discount { font-size: 2.5rem; }
+  .envelope { height: 180px; }
+}
+
+/* Tablets y escritorio: el escenario mantiene el ancho de
+   tarjeta (esto es una experiencia íntima de regalo, no un
+   dashboard que deba ocupar toda la pantalla), pero se le da
+   más aire alrededor. */
+@media (min-width: 720px) {
+  .stage { padding: 60px 20px; }
+  .screen { max-width: 460px; }
+  .envelope { width: 340px; }
+}
+
+@media (min-width: 1024px) {
+  body {
+    background:
+      radial-gradient(60% 70% at 50% 0%, var(--color-blush-soft) 0%, transparent 60%),
+      radial-gradient(60% 60% at 100% 100%, var(--color-blush) 0%, transparent 55%),
+      var(--color-cream);
+  }
+}
+
+/* Modal: en pantallas amplias se centra en vez de anclarse abajo */
+@media (min-width: 720px) {
+  .modal { align-items: center; }
+  .modal-panel { border-radius: 24px; }
+}

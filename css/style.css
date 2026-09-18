@@ -1,0 +1,457 @@
+/* =========================================================
+   Closet de Erimar — style.css
+   Tokens de diseño + estructura base
+   ========================================================= */
+
+:root {
+  --color-cream: #fbf5f0;
+  --color-blush: #f4dee4;
+  --color-blush-soft: #f8e9ed;
+  --color-rose: #c9829a;
+  --color-wine: #6e2a3f;
+  --color-wine-deep: #4a1b2b;
+  --color-gold: #c8a35d;
+  --color-white: #ffffff;
+  --color-ink: #3a2530;
+
+  --font-display: "Playfair Display", "Iowan Old Style", Georgia, serif;
+  --font-body: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --radius-lg: 28px;
+  --radius-md: 18px;
+  --radius-sm: 10px;
+
+  --shadow-soft: 0 20px 60px -20px rgba(110, 42, 63, 0.28);
+  --shadow-card: 0 12px 32px -12px rgba(110, 42, 63, 0.22);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  background:
+    radial-gradient(120% 90% at 50% -10%, var(--color-blush-soft) 0%, transparent 55%),
+    radial-gradient(140% 100% at 85% 110%, var(--color-blush) 0%, transparent 60%),
+    var(--color-cream);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.stage {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+}
+
+.screen {
+  display: none;
+  width: 100%;
+  max-width: 440px;
+}
+
+.screen.is-active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ---------- Marca ---------- */
+
+.wordmark {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  color: var(--color-wine);
+  letter-spacing: 0.02em;
+  font-size: 1.1rem;
+  margin: 0 0 18px;
+}
+
+.wordmark--large {
+  font-size: 1.6rem;
+  margin-bottom: 28px;
+}
+
+/* ---------- Paneles genéricos (no-qr, error, returning) ---------- */
+
+.panel {
+  width: 100%;
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  padding: 40px 32px;
+  text-align: center;
+  box-shadow: var(--shadow-soft);
+}
+
+.panel--soft {
+  background: linear-gradient(180deg, var(--color-white), var(--color-blush-soft));
+}
+
+.panel-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.5rem;
+  color: var(--color-wine-deep);
+  margin: 0 0 12px;
+  line-height: 1.3;
+}
+
+.panel-text {
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--color-ink);
+  opacity: 0.85;
+  margin: 0;
+}
+
+.panel-text--emphasis {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.15rem;
+  color: var(--color-wine);
+  opacity: 1;
+}
+
+/* ---------- Loader ---------- */
+
+.loader {
+  display: flex;
+  gap: 10px;
+}
+
+.loader-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--color-rose);
+  animation: erimar-bounce 1.1s ease-in-out infinite;
+}
+.loader-dot:nth-child(2) { animation-delay: 0.15s; }
+.loader-dot:nth-child(3) { animation-delay: 0.3s; }
+
+/* ---------- Intro ---------- */
+
+.intro {
+  text-align: center;
+  padding: 20px;
+}
+
+.intro-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.55rem;
+  line-height: 1.4;
+  color: var(--color-wine-deep);
+  margin: 0 0 14px;
+}
+
+.intro-subtitle {
+  font-size: 1rem;
+  color: var(--color-rose);
+  margin: 0;
+}
+
+/* ---------- Escenario del sobre ---------- */
+
+.envelope-stage {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+.envelope-hint {
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--color-wine);
+  line-height: 1.5;
+  margin: 0;
+  transition: opacity 0.4s ease;
+}
+
+.envelope {
+  position: relative;
+  width: min(320px, 78vw);
+  height: 210px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.envelope-back {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  background: linear-gradient(155deg, var(--color-blush), var(--color-white));
+  box-shadow: var(--shadow-card);
+}
+
+.envelope-card {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 14px;
+  height: 150px;
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  box-shadow: 0 6px 18px rgba(110, 42, 63, 0.18);
+  z-index: 1;
+}
+
+.envelope-flap {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 105px;
+  background: linear-gradient(155deg, var(--color-rose), var(--color-wine));
+  clip-path: polygon(0 0, 100% 0, 50% 78%);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  z-index: 2;
+  transform-origin: top center;
+}
+
+.envelope-seal {
+  position: absolute;
+  top: 58px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--color-gold);
+  color: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  z-index: 3;
+  box-shadow: 0 4px 10px rgba(110, 42, 63, 0.3);
+}
+
+.envelope-sparkles {
+  position: absolute;
+  inset: -20px;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.envelope-sparkles i {
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--color-gold);
+  opacity: 0;
+}
+
+/* ---------- Panel de revelación (dentro del sobre) ---------- */
+
+.reveal-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.reveal-panel.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.reveal-eyebrow {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.15rem;
+  color: var(--color-wine-deep);
+  margin: 0;
+}
+
+.reveal-thanks {
+  font-size: 0.98rem;
+  color: var(--color-rose);
+  margin: 0;
+}
+
+/* ---------- Tarjeta de cupón ---------- */
+
+.coupon-card {
+  width: 100%;
+  background: var(--color-white);
+  border: 1px solid rgba(200, 163, 93, 0.35);
+  border-radius: var(--radius-lg);
+  padding: 30px 26px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.coupon-discount {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 3rem;
+  color: var(--color-wine);
+  margin: 0;
+  line-height: 1;
+}
+
+.coupon-label {
+  font-size: 0.85rem;
+  color: var(--color-ink);
+  opacity: 0.7;
+  margin: 0 0 14px;
+}
+
+.coupon-code {
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-size: 1.05rem;
+  color: var(--color-wine-deep);
+  background: var(--color-blush-soft);
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  margin: 0 0 14px;
+}
+
+.coupon-status-note {
+  font-size: 0.85rem;
+  color: #a3392f;
+  margin: -6px 0 10px;
+}
+
+.coupon-expiry {
+  font-size: 0.85rem;
+  color: var(--color-ink);
+  opacity: 0.65;
+  margin: 10px 0 0;
+}
+
+.share-hint {
+  font-size: 0.82rem;
+  color: var(--color-rose);
+  text-align: center;
+  line-height: 1.5;
+  margin: 4px 0 0;
+  max-width: 320px;
+}
+
+/* ---------- Botones ---------- */
+
+.btn {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 999px;
+  padding: 13px 26px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn--ghost {
+  background: var(--color-blush-soft);
+  color: var(--color-wine-deep);
+  margin-bottom: 4px;
+}
+
+.btn--primary {
+  background: linear-gradient(135deg, var(--color-rose), var(--color-wine));
+  color: var(--color-white);
+  width: 100%;
+  margin-top: 6px;
+  box-shadow: 0 10px 24px -10px rgba(110, 42, 63, 0.5);
+}
+
+.btn--link {
+  background: none;
+  color: var(--color-rose);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  padding: 8px;
+}
+
+/* ---------- Modal de términos ---------- */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(74, 27, 43, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 50;
+  padding: 0;
+}
+
+.modal.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-panel {
+  width: 100%;
+  max-width: 440px;
+  background: var(--color-white);
+  border-radius: 24px 24px 0 0;
+  padding: 30px 26px 34px;
+  transform: translateY(16px);
+  transition: transform 0.25s ease;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal.is-open .modal-panel {
+  transform: translateY(0);
+}
+
+.modal-panel h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  color: var(--color-wine-deep);
+  margin: 0 0 14px;
+  font-size: 1.2rem;
+}
+
+.terms-body {
+  white-space: pre-line;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--color-ink);
+  opacity: 0.85;
+  margin: 0 0 22px;
+}
