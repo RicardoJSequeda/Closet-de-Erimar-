@@ -30,15 +30,33 @@
 <!-- Panel real, oculto hasta confirmar sesión + membresía admin -->
 <div id="admin-app" class="admin-app" hidden>
   <header class="admin-header">
-    <p class="wordmark">Closet de Erimar · Admin</p>
-    <button id="logout-btn" class="btn btn--ghost btn--small">Cerrar sesión</button>
+    <div class="brand-lockup">
+      <span class="brand-mark" aria-hidden="true">CE</span>
+      <div>
+        <p class="eyebrow">Espacio privado</p>
+        <p class="wordmark">Closet de Erimar</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="secure-status"><span class="status-dot" aria-hidden="true"></span> Sesión segura</span>
+      <button id="logout-btn" class="btn btn--ghost btn--small">Cerrar sesión</button>
+    </div>
   </header>
 
-  <nav class="admin-tabs">
-    <button class="tab-btn is-active" data-tab="clientes">Clientes</button>
-    <button class="tab-btn" data-tab="qr">Crear QR</button>
-    <button class="tab-btn" data-tab="campanas">Campañas</button>
-    <button class="tab-btn" data-tab="cupones">Cupones</button>
+  <section class="admin-intro">
+    <div>
+      <p class="eyebrow">Panel de control</p>
+      <h1>Gestiona tu comunidad</h1>
+      <p class="intro-copy">Crea experiencias especiales, administra tus clientas y mantén el control de tus campañas.</p>
+    </div>
+    <div class="intro-detail"><span class="detail-label">Hoy</span><strong id="admin-date">—</strong></div>
+  </section>
+
+  <nav class="admin-tabs" aria-label="Secciones del panel">
+    <button class="tab-btn is-active" data-tab="clientes" aria-selected="true">Clientes <span class="tab-count" id="customer-count">0</span></button>
+    <button class="tab-btn" data-tab="qr" aria-selected="false">Crear QR</button>
+    <button class="tab-btn" data-tab="campanas" aria-selected="false">Campañas</button>
+    <button class="tab-btn" data-tab="cupones" aria-selected="false">Cupones</button>
   </nav>
 
   <!-- CLIENTES -->

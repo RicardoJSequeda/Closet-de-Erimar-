@@ -81,9 +81,13 @@
   function setupTabs() {
     document.querySelectorAll(".tab-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
-        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("is-active"));
+        document.querySelectorAll(".tab-btn").forEach((b) => {
+          b.classList.remove("is-active");
+          b.setAttribute("aria-selected", "false");
+        });
         document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("is-active"));
         btn.classList.add("is-active");
+        btn.setAttribute("aria-selected", "true");
         document.getElementById("tab-" + btn.dataset.tab).classList.add("is-active");
       });
     });
@@ -94,6 +98,8 @@
   function initAdminApp() {
     if (appInitialized) return;
     appInitialized = true;
+    const today = new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "long", year: "numeric" }).format(new Date());
+    if (el("admin-date")) el("admin-date").textContent = today;
     setupTabs();
     loadCustomers();
     loadCampaignsEverywhere();
