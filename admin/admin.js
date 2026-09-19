@@ -19,19 +19,24 @@
   // ---------------------------------------------------------
   // Autenticación
   // ---------------------------------------------------------
-  async function checkIsAdmin() {
+  async function checkIsAdmin(userId) {
+    if (!userId) return false;
     const { data, error } = await client
       .from("admins")
       .select("user_id")
-      .limit(1);
-    if (error) return false;
-    return Array.isArray(data) && data.length > 0;
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) {
+      console.error("[v0] No se pudo verificar el rol administrativo", error);
+      return false;
+    }
+    return Boolean(data && data.user_id === userId);
   }
 
   async function boot() {
     const { data: sessionData } = await client.auth.getSession();
     if (sessionData && sessionData.session) {
-      const isAdmin = await checkIsAdmin();
+      const isAdmin = await checkIsAdmin(sessionData.session.user.id);
       if (isAdmin) {
         loginScreen.hidden = true;
         adminApp.hidden = false;
@@ -50,15 +55,23 @@
     const email = el("login-email").value.trim();
     const password = el("login-password").value;
     const errorEl = el("login-error");
+    const submitBtn = el("login-submit");
     errorEl.hidden = true;
+    submitBtn.disabled = true;
+    submitBtn.setAttribute("aria-busy", "true");
+    submitBtn.setAttribute("aria-label", "Verificando acceso");
 
     const { error } = await client.auth.signInWithPassword({ email, password });
+    submitBtn.disabled = false;
+    submitBtn.removeAttribute("aria-busy");
+    submitBtn.removeAttribute("aria-label");
     if (error) {
       errorEl.textContent = "Correo o contraseña incorrectos.";
       errorEl.hidden = false;
       return;
     }
-    const isAdmin = await checkIsAdmin();
+    const { data: currentSession } = await client.auth.getSession();
+    const isAdmin = await checkIsAdmin(currentSession.session?.user.id);
     if (!isAdmin) {
       await client.auth.signOut();
       errorEl.textContent = "Esta cuenta no tiene acceso al panel administrativo.";
@@ -81,9 +94,13 @@
   function setupTabs() {
     document.querySelectorAll(".tab-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
-        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("is-active"));
+        document.querySelectorAll(".tab-btn").forEach((b) => {
+          b.classList.remove("is-active");
+          b.setAttribute("aria-selected", "false");
+        });
         document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("is-active"));
         btn.classList.add("is-active");
+        btn.setAttribute("aria-selected", "true");
         document.getElementById("tab-" + btn.dataset.tab).classList.add("is-active");
       });
     });
@@ -94,11 +111,15 @@
   function initAdminApp() {
     if (appInitialized) return;
     appInitialized = true;
+    const today = new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "long", year: "numeric" }).format(new Date());
+    if (el("admin-date")) el("admin-date").textContent = today;
     setupTabs();
     loadCustomers();
     loadCampaignsEverywhere();
     setupCustomerForm();
     setupQrForm();
+    setupQrList();
+    loadQrCards();
     setupCampaignForm();
     setupValidateForm();
     setupStatsCampaignSelect();
@@ -120,6 +141,10 @@
       return;
     }
     customersCache = data || [];
+    const countLabel = el("customer-count-label");
+    const countBadge = el("customer-count");
+    if (countLabel) countLabel.textContent = `${customersCache.length} clientas registradas`;
+    if (countBadge) countBadge.textContent = customersCache.length;
     renderCustomerList(customersCache);
     fillCustomerSelect(customersCache);
   }
@@ -133,14 +158,39 @@
     container.innerHTML = list
       .map(
         (c) => `
-        <div class="list-row">
+        <div class="list-row" data-customer-id="${c.id}">
           <div>
             <p class="list-row-title">${escapeHtml(c.full_name)}</p>
-            <p class="list-row-sub">${escapeHtml(c.phone || "")}</p>
+            <p class="list-row-sub">${escapeHtml(c.phone || "Sin teléfono")}</p>
+            ${c.notes ? `<p class="list-row-sub">${escapeHtml(c.notes)}</p>` : ""}
+          </div>
+          <div class="list-row-actions">
+            <button type="button" class="btn btn--ghost btn--small" data-customer-edit>Editar</button>
+            <button type="button" class="btn btn--danger btn--small" data-customer-delete>Eliminar</button>
           </div>
         </div>`
       )
       .join("");
+
+    container.querySelectorAll("[data-customer-edit]").forEach((button) => button.addEventListener("click", async () => {
+      const row = button.closest("[data-customer-id]");
+      const customer = customersCache.find((item) => item.id === row.dataset.customerId);
+      if (!customer) return;
+      const full_name = window.prompt("Nombre completo", customer.full_name);
+      if (full_name === null || !full_name.trim()) return;
+      const phone = window.prompt("WhatsApp / teléfono", customer.phone || "");
+      const notes = window.prompt("Notas", customer.notes || "");
+      const { error } = await client.from("customers").update({ full_name: full_name.trim(), phone: phone?.trim() || null, notes: notes?.trim() || null }).eq("id", customer.id);
+      if (error) return alert("No se pudo actualizar la clienta.");
+      loadCustomers();
+    }));
+    container.querySelectorAll("[data-customer-delete]").forEach((button) => button.addEventListener("click", async () => {
+      const row = button.closest("[data-customer-id]");
+      if (!window.confirm("¿Eliminar esta clienta y sus QR/cupones asociados?")) return;
+      const { error } = await client.from("customers").delete().eq("id", row.dataset.customerId);
+      if (error) return alert("No se pudo eliminar la clienta.");
+      loadCustomers(); loadQrCards(); loadCouponsTable();
+    }));
   }
 
   el("customer-search").addEventListener("input", (e) => {
@@ -233,10 +283,19 @@
               <option value="20" ${c.duration_days === 20 ? "selected" : ""}>20 días</option>
               <option value="30" ${c.duration_days === 30 ? "selected" : ""}>30 días</option>
             </select>
+            <button type="button" class="btn btn--ghost btn--small" data-campaign-toggle="${c.id}">${c.active ? "Desactivar" : "Activar"}</button>
           </div>
         </div>`
       )
       .join("");
+
+    container.querySelectorAll("[data-campaign-toggle]").forEach((button) => button.addEventListener("click", async () => {
+      const campaign = campaignsCache.find((item) => item.id === button.dataset.campaignToggle);
+      if (!campaign) return;
+      const { error } = await client.from("campaigns").update({ active: !campaign.active }).eq("id", campaign.id);
+      if (error) return alert("No se pudo cambiar el estado de la campaña.");
+      loadCampaignsEverywhere();
+    }));
 
     container.querySelectorAll(".duration-select").forEach((sel) => {
       sel.addEventListener("change", async () => {
@@ -419,6 +478,100 @@
         }
       };
     });
+  }
+
+  // ---------------------------------------------------------
+  // QR existentes: mostrar, descargar, compartir y eliminar
+  // ---------------------------------------------------------
+  let qrCardsCache = [];
+
+  function qrPublicUrl(token) {
+    return `${new URL("../", window.location.href).toString()}?qr=${encodeURIComponent(token)}`;
+  }
+
+  async function buildQrImage(token) {
+    return createQrDataUrl(qrPublicUrl(token));
+  }
+
+  function bindQrActions(card, qrImageUrl, customerName) {
+    const fileName = `qr-${customerName.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.png`;
+    card.querySelector("[data-qr-download]")?.addEventListener("click", async () => {
+      const blob = await dataUrlToBlob(qrImageUrl);
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = fileName;
+      link.click();
+      URL.revokeObjectURL(objectUrl);
+    });
+    card.querySelector("[data-qr-share]")?.addEventListener("click", async () => {
+      try {
+        const blob = await dataUrlToBlob(qrImageUrl);
+        const file = new File([blob], fileName, { type: "image/png" });
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file], title: "Closet de Erimar", text: `QR de ${customerName}` });
+        } else if (navigator.share) {
+          await navigator.share({ title: "Closet de Erimar", url: qrPublicUrl(card.dataset.token) });
+        } else throw new Error("share_not_supported");
+      } catch (error) {
+        if (error.name !== "AbortError") showQrNote("Compartir no está disponible en este navegador.");
+      }
+    });
+    card.querySelector("[data-qr-delete]")?.addEventListener("click", async () => {
+      if (!window.confirm("¿Eliminar este QR? También se eliminará su cupón asociado.")) return;
+      const { error } = await client.rpc("delete_qr_card", { p_qr_card_id: card.dataset.id });
+      if (error) { alert("No se pudo eliminar el QR."); return; }
+      loadQrCards();
+      loadCouponsTable();
+    });
+    card.querySelector("[data-qr-deactivate]")?.addEventListener("click", async () => {
+      const { error } = await client.rpc("deactivate_qr_card", { p_qr_card_id: card.dataset.id });
+      if (error) { alert("No se pudo desactivar el QR."); return; }
+      loadQrCards();
+    });
+  }
+
+  async function loadQrCards() {
+    const container = el("qr-list");
+    if (!container) return;
+    const { data, error } = await client
+      .from("qr_cards")
+      .select("id, token_value, active, created_at, customers(full_name), campaigns(name)")
+      .order("created_at", { ascending: false });
+    if (error) { console.error(error); container.innerHTML = '<p class="empty-state">No se pudieron cargar los QR.</p>'; return; }
+    qrCardsCache = data || [];
+    if (!qrCardsCache.length) { container.innerHTML = '<p class="empty-state">Aún no hay QR creados.</p>'; return; }
+    container.replaceChildren();
+    for (const row of qrCardsCache) {
+      const customerName = row.customers?.full_name || "Clienta";
+      const card = document.createElement("article");
+      card.className = `qr-list-card${row.active ? "" : " is-inactive"}`;
+      card.dataset.id = row.id;
+      card.dataset.token = row.token_value || "";
+      const image = document.createElement("div");
+      image.className = "qr-list-card__image";
+      card.innerHTML = `<div class="qr-list-card__info"><p class="qr-list-card__title"></p><p class="qr-list-card__meta"></p><p class="qr-list-card__meta"></p></div><div class="qr-list-card__actions"><button type="button" class="btn btn--ghost btn--small" data-qr-show>Mostrar</button><button type="button" class="btn btn--ghost btn--small" data-qr-download>Descargar</button><button type="button" class="btn btn--ghost btn--small" data-qr-share>Compartir</button><button type="button" class="btn btn--ghost btn--small" data-qr-deactivate ${row.active ? "" : "disabled"}>Desactivar</button><button type="button" class="btn btn--danger btn--small" data-qr-delete>Eliminar</button></div>`;
+      card.querySelector(".qr-list-card__title").textContent = customerName;
+      card.querySelector(".qr-list-card__meta").textContent = `${row.campaigns?.name || "Campaña"} · ${row.active ? "Activo" : "Inactivo"}`;
+      card.querySelectorAll(".qr-list-card__meta")[1].textContent = `Creado ${new Date(row.created_at).toLocaleDateString("es-CO")}`;
+      card.prepend(image);
+      container.append(card);
+      if (!row.token_value) continue;
+      const qrImageUrl = await buildQrImage(row.token_value);
+      image.innerHTML = `<img src="${qrImageUrl}" alt="Código QR de ${escapeHtml(customerName)}" width="84" height="84">`;
+      card.querySelector("[data-qr-show]").addEventListener("click", () => {
+        el("qr-result-customer").textContent = customerName;
+        el("qr-result-campaign").textContent = row.campaigns?.name || "";
+        el("qr-url").textContent = qrPublicUrl(row.token_value);
+        el("qr-canvas-holder").innerHTML = `<img src="${qrImageUrl}" alt="Código QR de ${escapeHtml(customerName)}" width="220" height="220">`;
+        el("qr-result").hidden = false;
+      });
+      bindQrActions(card, qrImageUrl, customerName);
+    }
+  }
+
+  function setupQrList() {
+    el("refresh-qr-list")?.addEventListener("click", loadQrCards);
   }
 
   // ---------------------------------------------------------
