@@ -445,15 +445,13 @@
 
       el("qr-download").onclick = async () => {
         try {
-          const blob = await dataUrlToBlob(qrImageUrl);
-          const objectUrl = URL.createObjectURL(blob);
           const link = document.createElement("a");
-          link.href = objectUrl;
+          link.href = qrImageUrl;
           link.download = fileName;
+          link.rel = "noopener";
           document.body.appendChild(link);
           link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(objectUrl);
+          link.remove();
         } catch (err) {
           console.error(err);
           // El QR vive localmente en una URL data:, por lo que se puede
@@ -462,6 +460,8 @@
           showQrNote("Se abrió el QR en una pestaña nueva: mantén presionada la imagen (o clic derecho) para guardarla.");
         }
       };
+
+      await loadQrCards();
 
       el("qr-share").onclick = async () => {
         try {
@@ -479,11 +479,12 @@
             await navigator.share({ title: "Closet de Erimar", text: `Tarjeta QR de ${customerName}`, url: qrUrl });
             return;
           }
-          throw new Error("share_not_supported");
+          await navigator.clipboard.writeText(qrUrl);
+          showQrNote("Enlace del cupón copiado. Puedes pegarlo para compartirlo.");
         } catch (err) {
           console.error(err);
-          window.open(qrImageUrl, "_blank");
-          showQrNote("Tu navegador no permite compartir directamente: se abrió el QR en una pestaña nueva.");
+          window.open(qrImageUrl, "_blank", "noopener");
+          showQrNote("Se abrió el QR en una pestaña nueva para compartirlo manualmente.");
         }
       };
     });
@@ -506,14 +507,12 @@
     const fileName = `qr-${customerName.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.png`;
     card.querySelector("[data-qr-download]")?.addEventListener("click", async () => {
       const blob = await dataUrlToBlob(qrImageUrl);
-      const objectUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = objectUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  const link = document.createElement("a");
+  link.href = qrImageUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
     });
     card.querySelector("[data-qr-share]")?.addEventListener("click", async () => {
       try {
@@ -523,9 +522,15 @@
           await navigator.share({ files: [file], title: "Closet de Erimar", text: `QR de ${customerName}` });
         } else if (navigator.share) {
           await navigator.share({ title: "Closet de Erimar", url: qrPublicUrl(card.dataset.token) });
-        } else throw new Error("share_not_supported");
+        } else {
+          await navigator.clipboard.writeText(qrPublicUrl(card.dataset.token));
+          showQrNote("Enlace del cupón copiado.");
+        }
       } catch (error) {
-        if (error.name !== "AbortError") showQrNote("Compartir no está disponible en este navegador.");
+        if (error.name !== "AbortError") {
+          window.open(qrImageUrl, "_blank", "noopener");
+          showQrNote("Se abrió el QR para compartirlo manualmente.");
+        }
       }
     });
     card.querySelector("[data-qr-delete]")?.addEventListener("click", async () => {
