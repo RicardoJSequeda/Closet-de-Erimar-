@@ -323,21 +323,21 @@
       const today = new Date();
       const expiry = new Date(`${expiresOn}T23:59:59`);
       const duration = Math.max(1, Math.ceil((expiry - today) / 86400000));
-      const t5 = parseInt(el("tier-5").value || "0", 10);
-      const t10 = parseInt(el("tier-10").value || "0", 10);
-      const t15 = parseInt(el("tier-15").value || "0", 10);
-      const maxCoupons = t5 + t10 + t15;
+const t10 = parseInt(el("tier-10").value || "0", 10);
+ const t15 = parseInt(el("tier-15").value || "0", 10);
+ const t20 = parseInt(el("tier-20").value || "0", 10);
+ const maxCoupons = t10 + t15 + t20;
 
       if (!name || !expiresOn || Number.isNaN(expiry.getTime()) || expiry <= today || maxCoupons <= 0) {
         alert("Revisa el nombre, la fecha de vencimiento y la distribución de cupones.");
         return;
       }
 
-      const tiers = [
-        { discount_percent: 5, total: t5 },
-        { discount_percent: 10, total: t10 },
-        { discount_percent: 15, total: t15 },
-      ].filter((t) => t.total > 0);
+const tiers = [
+ { discount_percent: 10, total: t10 },
+ { discount_percent: 15, total: t15 },
+ { discount_percent: 20, total: t20 },
+ ].filter((t) => t.total > 0);
 
       const { data, error } = await client.rpc("create_campaign", {
         p_name: name,
@@ -356,9 +356,9 @@
         await client.from("campaigns").update({ expires_on: expiresOn }).eq("id", data.campaign_id);
       }
       el("campaign-form").reset();
-      el("tier-5").value = 6;
-      el("tier-10").value = 3;
-      el("tier-15").value = 1;
+el("tier-10").value = 6;
+el("tier-15").value = 3;
+el("tier-20").value = 1;
       loadCampaignsEverywhere();
     });
   }
