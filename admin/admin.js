@@ -506,8 +506,7 @@
   function bindQrActions(card, qrImageUrl, customerName) {
     const fileName = `qr-${customerName.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.png`;
     card.querySelector("[data-qr-download]")?.addEventListener("click", async () => {
-      const blob = await dataUrlToBlob(qrImageUrl);
-  const link = document.createElement("a");
+      const link = document.createElement("a");
   link.href = qrImageUrl;
   link.download = fileName;
   document.body.appendChild(link);
