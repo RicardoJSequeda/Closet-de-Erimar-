@@ -141,6 +141,10 @@
       return;
     }
     customersCache = data || [];
+    const countLabel = el("customer-count-label");
+    const countBadge = el("customer-count");
+    if (countLabel) countLabel.textContent = `${customersCache.length} clientas registradas`;
+    if (countBadge) countBadge.textContent = customersCache.length;
     renderCustomerList(customersCache);
     fillCustomerSelect(customersCache);
   }
@@ -154,14 +158,39 @@
     container.innerHTML = list
       .map(
         (c) => `
-        <div class="list-row">
+        <div class="list-row" data-customer-id="${c.id}">
           <div>
             <p class="list-row-title">${escapeHtml(c.full_name)}</p>
-            <p class="list-row-sub">${escapeHtml(c.phone || "")}</p>
+            <p class="list-row-sub">${escapeHtml(c.phone || "Sin teléfono")}</p>
+            ${c.notes ? `<p class="list-row-sub">${escapeHtml(c.notes)}</p>` : ""}
+          </div>
+          <div class="list-row-actions">
+            <button type="button" class="btn btn--ghost btn--small" data-customer-edit>Editar</button>
+            <button type="button" class="btn btn--danger btn--small" data-customer-delete>Eliminar</button>
           </div>
         </div>`
       )
       .join("");
+
+    container.querySelectorAll("[data-customer-edit]").forEach((button) => button.addEventListener("click", async () => {
+      const row = button.closest("[data-customer-id]");
+      const customer = customersCache.find((item) => item.id === row.dataset.customerId);
+      if (!customer) return;
+      const full_name = window.prompt("Nombre completo", customer.full_name);
+      if (full_name === null || !full_name.trim()) return;
+      const phone = window.prompt("WhatsApp / teléfono", customer.phone || "");
+      const notes = window.prompt("Notas", customer.notes || "");
+      const { error } = await client.from("customers").update({ full_name: full_name.trim(), phone: phone?.trim() || null, notes: notes?.trim() || null }).eq("id", customer.id);
+      if (error) return alert("No se pudo actualizar la clienta.");
+      loadCustomers();
+    }));
+    container.querySelectorAll("[data-customer-delete]").forEach((button) => button.addEventListener("click", async () => {
+      const row = button.closest("[data-customer-id]");
+      if (!window.confirm("¿Eliminar esta clienta y sus QR/cupones asociados?")) return;
+      const { error } = await client.from("customers").delete().eq("id", row.dataset.customerId);
+      if (error) return alert("No se pudo eliminar la clienta.");
+      loadCustomers(); loadQrCards(); loadCouponsTable();
+    }));
   }
 
   el("customer-search").addEventListener("input", (e) => {
@@ -254,10 +283,19 @@
               <option value="20" ${c.duration_days === 20 ? "selected" : ""}>20 días</option>
               <option value="30" ${c.duration_days === 30 ? "selected" : ""}>30 días</option>
             </select>
+            <button type="button" class="btn btn--ghost btn--small" data-campaign-toggle="${c.id}">${c.active ? "Desactivar" : "Activar"}</button>
           </div>
         </div>`
       )
       .join("");
+
+    container.querySelectorAll("[data-campaign-toggle]").forEach((button) => button.addEventListener("click", async () => {
+      const campaign = campaignsCache.find((item) => item.id === button.dataset.campaignToggle);
+      if (!campaign) return;
+      const { error } = await client.from("campaigns").update({ active: !campaign.active }).eq("id", campaign.id);
+      if (error) return alert("No se pudo cambiar el estado de la campaña.");
+      loadCampaignsEverywhere();
+    }));
 
     container.querySelectorAll(".duration-select").forEach((sel) => {
       sel.addEventListener("change", async () => {
