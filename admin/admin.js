@@ -19,19 +19,24 @@
   // ---------------------------------------------------------
   // Autenticación
   // ---------------------------------------------------------
-  async function checkIsAdmin() {
+  async function checkIsAdmin(userId) {
+    if (!userId) return false;
     const { data, error } = await client
       .from("admins")
       .select("user_id")
-      .limit(1);
-    if (error) return false;
-    return Array.isArray(data) && data.length > 0;
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) {
+      console.error("[v0] No se pudo verificar el rol administrativo", error);
+      return false;
+    }
+    return Boolean(data && data.user_id === userId);
   }
 
   async function boot() {
     const { data: sessionData } = await client.auth.getSession();
     if (sessionData && sessionData.session) {
-      const isAdmin = await checkIsAdmin();
+      const isAdmin = await checkIsAdmin(sessionData.session.user.id);
       if (isAdmin) {
         loginScreen.hidden = true;
         adminApp.hidden = false;
@@ -58,7 +63,8 @@
       errorEl.hidden = false;
       return;
     }
-    const isAdmin = await checkIsAdmin();
+    const { data: currentSession } = await client.auth.getSession();
+    const isAdmin = await checkIsAdmin(currentSession.session?.user.id);
     if (!isAdmin) {
       await client.auth.signOut();
       errorEl.textContent = "Esta cuenta no tiene acceso al panel administrativo.";

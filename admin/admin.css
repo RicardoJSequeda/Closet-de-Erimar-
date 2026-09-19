@@ -63,7 +63,11 @@ input:focus, select:focus, textarea:focus { border-color: var(--a-rose); box-sha
 .btn--small { padding: 9px 13px; font-size: .76rem; }
 .btn:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
 .list { display: flex; flex-direction: column; gap: 10px; }
-.list-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 15px 16px; border: 1px solid var(--a-border); border-radius: 14px; background: #fff; transition: transform .2s, border-color .2s; }
+.list-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 15px 16px; border: 1px solid var(--a-border); border-radius: 14px; background: #fff; transition: transform .2s, border-color .2s, box-shadow .2s; animation: list-in .35s ease both; }
+.list-row:nth-child(2) { animation-delay: .04s; }
+.list-row:nth-child(3) { animation-delay: .08s; }
+.list-row:nth-child(4) { animation-delay: .12s; }
+.list-row:hover { box-shadow: 0 8px 20px rgba(91, 39, 59, .08); }
 .list-row:hover { border-color: #d6b6c1; transform: translateX(3px); }
 .list-row-title { margin: 0; font-size: .92rem; font-weight: 700; }
 .list-row-sub, .empty-state { margin: 4px 0 0; color: var(--a-muted); font-size: .78rem; }
@@ -90,6 +94,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--a-rose); box-sha
 .status-used { color: var(--a-wine); background: #eee2ea; }
 .status-expired { color: #a3392f; background: #f3e3e1; }
 @keyframes rise-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes list-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+.btn[aria-busy="true"] { position: relative; color: transparent; pointer-events: none; }
+.btn[aria-busy="true"]::after { content: ""; position: absolute; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 @media (min-width: 820px) { #tab-clientes, #tab-campanas { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(0, 1.4fr); align-items: start; } #tab-qr, #tab-cupones { max-width: 980px; } }
 @media (max-width: 640px) { .admin-app { padding: 20px 15px 50px; } .admin-header, .admin-intro { align-items: flex-start; flex-direction: column; } .header-actions { width: 100%; justify-content: space-between; } .admin-intro { padding: 34px 0 24px; } .intro-detail { align-self: stretch; } .card { padding: 20px 16px; } .inline-form { flex-direction: column; } .inline-form .btn { width: 100%; } .auth-card { padding: 32px 24px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
