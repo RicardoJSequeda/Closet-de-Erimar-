@@ -384,6 +384,17 @@ const tiers = [
     return response.blob();
   }
 
+  function downloadQrImage(dataUrl, fileName) {
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = fileName;
+    link.target = "_blank";
+    link.rel = "noopener";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
   function showQrNote(message) {
     const note = el("qr-action-note");
     note.textContent = message;
@@ -446,15 +457,9 @@ const tiers = [
 
       const fileName = `qr-${customerName.replace(/\s+/g, "-").toLowerCase()}.png`;
 
-      el("qr-download").onclick = async () => {
+      el("qr-download").onclick = () => {
         try {
-          const link = document.createElement("a");
-          link.href = qrImageUrl;
-          link.download = fileName;
-          link.rel = "noopener";
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
+          downloadQrImage(qrImageUrl, fileName);
         } catch (err) {
           console.error(err);
           // El QR vive localmente en una URL data:, por lo que se puede
@@ -463,8 +468,6 @@ const tiers = [
           showQrNote("Se abrió el QR en una pestaña nueva: mantén presionada la imagen (o clic derecho) para guardarla.");
         }
       };
-
-      await loadQrCards();
 
       el("qr-share").onclick = async () => {
         try {
@@ -490,6 +493,7 @@ const tiers = [
           showQrNote("Se abrió el QR en una pestaña nueva para compartirlo manualmente.");
         }
       };
+      await loadQrCards();
     });
   }
 
@@ -508,13 +512,13 @@ const tiers = [
 
   function bindQrActions(card, qrImageUrl, customerName) {
     const fileName = `qr-${customerName.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.png`;
-    card.querySelector("[data-qr-download]")?.addEventListener("click", async () => {
-      const link = document.createElement("a");
-  link.href = qrImageUrl;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+    card.querySelector("[data-qr-download]")?.addEventListener("click", () => {
+      try {
+        downloadQrImage(qrImageUrl, fileName);
+      } catch (error) {
+        console.error("[v0] No se pudo descargar el QR", error);
+        window.open(qrImageUrl, "_blank", "noopener");
+      }
     });
     card.querySelector("[data-qr-share]")?.addEventListener("click", async () => {
       try {
