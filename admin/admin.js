@@ -118,6 +118,8 @@
     loadCampaignsEverywhere();
     setupCustomerForm();
     setupQrForm();
+    setupQrList();
+    loadQrCards();
     setupCampaignForm();
     setupValidateForm();
     setupStatsCampaignSelect();
@@ -438,6 +440,100 @@
         }
       };
     });
+  }
+
+  // ---------------------------------------------------------
+  // QR existentes: mostrar, descargar, compartir y eliminar
+  // ---------------------------------------------------------
+  let qrCardsCache = [];
+
+  function qrPublicUrl(token) {
+    return `${new URL("../", window.location.href).toString()}?qr=${encodeURIComponent(token)}`;
+  }
+
+  async function buildQrImage(token) {
+    return createQrDataUrl(qrPublicUrl(token));
+  }
+
+  function bindQrActions(card, qrImageUrl, customerName) {
+    const fileName = `qr-${customerName.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.png`;
+    card.querySelector("[data-qr-download]")?.addEventListener("click", async () => {
+      const blob = await dataUrlToBlob(qrImageUrl);
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = fileName;
+      link.click();
+      URL.revokeObjectURL(objectUrl);
+    });
+    card.querySelector("[data-qr-share]")?.addEventListener("click", async () => {
+      try {
+        const blob = await dataUrlToBlob(qrImageUrl);
+        const file = new File([blob], fileName, { type: "image/png" });
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file], title: "Closet de Erimar", text: `QR de ${customerName}` });
+        } else if (navigator.share) {
+          await navigator.share({ title: "Closet de Erimar", url: qrPublicUrl(card.dataset.token) });
+        } else throw new Error("share_not_supported");
+      } catch (error) {
+        if (error.name !== "AbortError") showQrNote("Compartir no está disponible en este navegador.");
+      }
+    });
+    card.querySelector("[data-qr-delete]")?.addEventListener("click", async () => {
+      if (!window.confirm("¿Eliminar este QR? También se eliminará su cupón asociado.")) return;
+      const { error } = await client.rpc("delete_qr_card", { p_qr_card_id: card.dataset.id });
+      if (error) { alert("No se pudo eliminar el QR."); return; }
+      loadQrCards();
+      loadCouponsTable();
+    });
+    card.querySelector("[data-qr-deactivate]")?.addEventListener("click", async () => {
+      const { error } = await client.rpc("deactivate_qr_card", { p_qr_card_id: card.dataset.id });
+      if (error) { alert("No se pudo desactivar el QR."); return; }
+      loadQrCards();
+    });
+  }
+
+  async function loadQrCards() {
+    const container = el("qr-list");
+    if (!container) return;
+    const { data, error } = await client
+      .from("qr_cards")
+      .select("id, token_value, active, created_at, customers(full_name), campaigns(name)")
+      .order("created_at", { ascending: false });
+    if (error) { console.error(error); container.innerHTML = '<p class="empty-state">No se pudieron cargar los QR.</p>'; return; }
+    qrCardsCache = data || [];
+    if (!qrCardsCache.length) { container.innerHTML = '<p class="empty-state">Aún no hay QR creados.</p>'; return; }
+    container.replaceChildren();
+    for (const row of qrCardsCache) {
+      const customerName = row.customers?.full_name || "Clienta";
+      const card = document.createElement("article");
+      card.className = `qr-list-card${row.active ? "" : " is-inactive"}`;
+      card.dataset.id = row.id;
+      card.dataset.token = row.token_value || "";
+      const image = document.createElement("div");
+      image.className = "qr-list-card__image";
+      card.innerHTML = `<div class="qr-list-card__info"><p class="qr-list-card__title"></p><p class="qr-list-card__meta"></p><p class="qr-list-card__meta"></p></div><div class="qr-list-card__actions"><button type="button" class="btn btn--ghost btn--small" data-qr-show>Mostrar</button><button type="button" class="btn btn--ghost btn--small" data-qr-download>Descargar</button><button type="button" class="btn btn--ghost btn--small" data-qr-share>Compartir</button><button type="button" class="btn btn--ghost btn--small" data-qr-deactivate ${row.active ? "" : "disabled"}>Desactivar</button><button type="button" class="btn btn--danger btn--small" data-qr-delete>Eliminar</button></div>`;
+      card.querySelector(".qr-list-card__title").textContent = customerName;
+      card.querySelector(".qr-list-card__meta").textContent = `${row.campaigns?.name || "Campaña"} · ${row.active ? "Activo" : "Inactivo"}`;
+      card.querySelectorAll(".qr-list-card__meta")[1].textContent = `Creado ${new Date(row.created_at).toLocaleDateString("es-CO")}`;
+      card.prepend(image);
+      container.append(card);
+      if (!row.token_value) continue;
+      const qrImageUrl = await buildQrImage(row.token_value);
+      image.innerHTML = `<img src="${qrImageUrl}" alt="Código QR de ${escapeHtml(customerName)}" width="84" height="84">`;
+      card.querySelector("[data-qr-show]").addEventListener("click", () => {
+        el("qr-result-customer").textContent = customerName;
+        el("qr-result-campaign").textContent = row.campaigns?.name || "";
+        el("qr-url").textContent = qrPublicUrl(row.token_value);
+        el("qr-canvas-holder").innerHTML = `<img src="${qrImageUrl}" alt="Código QR de ${escapeHtml(customerName)}" width="220" height="220">`;
+        el("qr-result").hidden = false;
+      });
+      bindQrActions(card, qrImageUrl, customerName);
+    }
+  }
+
+  function setupQrList() {
+    el("refresh-qr-list")?.addEventListener("click", loadQrCards);
   }
 
   // ---------------------------------------------------------
