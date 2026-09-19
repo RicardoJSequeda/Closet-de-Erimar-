@@ -43,8 +43,15 @@ input:focus, select:focus, textarea:focus { border-color: var(--a-rose); box-sha
 .tab-btn.is-active { color: #fff; background: var(--a-wine); box-shadow: 0 6px 16px rgba(116,53,77,.2); }
 .tab-count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; color: var(--a-wine); background: var(--a-blush); font-size: .68rem; }
 .tab-btn.is-active .tab-count { color: var(--a-wine); background: #fff; }
-.tab-panel { display: none; flex-direction: column; gap: 18px; animation: rise-in .3s ease both; }
-.tab-panel.is-active { display: flex; }
+.tab-panel { display: none !important; flex-direction: column; gap: 18px; animation: rise-in .3s ease both; }
+.tab-panel.is-active { display: flex !important; }
+.tab-panel.is-active .card { display: block; }
+.customer-list-card { min-width: 0; }
+.customer-create-trigger { margin-bottom: 14px; }
+#customer-modal { width: min(92vw, 440px); padding: 0; border: 0; border-radius: 18px; background: transparent; box-shadow: 0 24px 80px rgba(50,20,35,.28); }
+#customer-modal::backdrop { background: rgba(48,24,35,.32); backdrop-filter: blur(3px); }
+#customer-modal .card { margin: 0; }
+.modal-close-row { display: flex; justify-content: flex-end; margin-bottom: 8px; }
 .card { padding: 22px 20px; border: 1px solid rgba(234,221,225,.8); border-radius: 17px; background: rgba(255,253,251,.92); box-shadow: 0 14px 32px rgba(91,39,59,.055); }
 .card h2 { margin: 0 0 16px; color: var(--a-wine-deep); font: 600 1.25rem var(--a-font-display); }
 .card h3 { margin: 24px 0 12px; color: var(--a-wine-deep); font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; }

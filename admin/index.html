@@ -61,7 +61,17 @@
 
   <!-- CLIENTES -->
   <section id="tab-clientes" class="tab-panel is-active">
+    <div class="card customer-list-card">
+      <div class="card-header-row"><div><h2>Clientas</h2><p class="form-help">Administra tu comunidad y crea QR para cada clienta.</p></div><button type="button" id="open-customer-modal" class="btn btn--primary customer-create-trigger">Nueva clienta</button></div>
+      <input type="search" id="customer-search" placeholder="Buscar por nombre…" />
+      <div class="list-toolbar"><span class="form-help" id="customer-count-label">0 clientas</span></div>
+      <div id="customer-list" class="list"></div>
+    </div>
+  </section>
+
+  <dialog id="customer-modal">
     <div class="card">
+      <div class="modal-close-row"><button type="button" id="close-customer-modal" class="btn btn--ghost btn--small">Cerrar</button></div>
       <h2>Nueva clienta</h2>
       <form id="customer-form" class="stacked-form">
         <label>Nombre completo <input type="text" id="customer-name" required /></label>
@@ -70,16 +80,7 @@
         <button type="submit" class="btn btn--primary">Guardar clienta</button>
       </form>
     </div>
-
-    <div class="card">
-      <div class="card-header-row">
-        <h2>Clientas</h2>
-        <input type="search" id="customer-search" placeholder="Buscar por nombre…" />
-      </div>
-      <div class="list-toolbar"><span class="form-help" id="customer-count-label">0 clientas</span></div>
-      <div id="customer-list" class="list"></div>
-    </div>
-  </section>
+  </dialog>
 
   <!-- CREAR QR -->
   <section id="tab-qr" class="tab-panel">

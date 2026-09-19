@@ -114,6 +114,7 @@
     const today = new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "long", year: "numeric" }).format(new Date());
     if (el("admin-date")) el("admin-date").textContent = today;
     setupTabs();
+    setupCustomerModal();
     loadCustomers();
     loadCampaignsEverywhere();
     setupCustomerForm();
@@ -199,6 +200,13 @@
     renderCustomerList(filtered);
   });
 
+  function setupCustomerModal() {
+    const modal = el("customer-modal");
+    el("open-customer-modal")?.addEventListener("click", () => modal?.showModal());
+    el("close-customer-modal")?.addEventListener("click", () => modal?.close());
+    modal?.addEventListener("click", (event) => { if (event.target === modal) modal.close(); });
+  }
+
   function setupCustomerForm() {
     el("customer-form").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -218,6 +226,7 @@
         return;
       }
       el("customer-form").reset();
+      el("customer-modal")?.close();
       loadCustomers();
     });
   }
@@ -536,7 +545,7 @@
     if (!container) return;
     const { data, error } = await client
       .from("qr_cards")
-      .select("id, token_value, active, created_at, customers(full_name), campaigns(name)")
+      .select("id, active, created_at, customers(full_name), campaigns(name), coupons!inner(id, code, status, expires_at)")
       .order("created_at", { ascending: false });
     if (error) { console.error(error); container.innerHTML = '<p class="empty-state">No se pudieron cargar los QR.</p>'; return; }
     qrCardsCache = data || [];
@@ -547,18 +556,19 @@
       const card = document.createElement("article");
       card.className = `qr-list-card${row.active ? "" : " is-inactive"}`;
       card.dataset.id = row.id;
+      const coupon = Array.isArray(row.coupons) ? row.coupons[0] : row.coupons;
       card.dataset.token = row.token_value || "";
       const image = document.createElement("div");
       image.className = "qr-list-card__image";
       card.innerHTML = `<div class="qr-list-card__info"><p class="qr-list-card__title"></p><p class="qr-list-card__meta"></p><p class="qr-list-card__meta"></p></div><div class="qr-list-card__actions"><button type="button" class="btn btn--ghost btn--small" data-qr-show>Mostrar</button><button type="button" class="btn btn--ghost btn--small" data-qr-download>Descargar</button><button type="button" class="btn btn--ghost btn--small" data-qr-share>Compartir</button><button type="button" class="btn btn--ghost btn--small" data-qr-deactivate ${row.active ? "" : "disabled"}>Desactivar</button><button type="button" class="btn btn--danger btn--small" data-qr-delete>Eliminar</button></div>`;
       card.querySelector(".qr-list-card__title").textContent = customerName;
-      card.querySelector(".qr-list-card__meta").textContent = `${row.campaigns?.name || "Campaña"} · ${row.active ? "Activo" : "Inactivo"}`;
+      card.querySelector(".qr-list-card__meta").textContent = `${row.campaigns?.name || "Campaña"} · Cupón ${coupon?.code || "sin código"} · ${coupon?.status || "sin estado"}`;
       card.querySelectorAll(".qr-list-card__meta")[1].textContent = `Creado ${new Date(row.created_at).toLocaleDateString("es-CO")}`;
       card.prepend(image);
       container.append(card);
       if (!row.token_value) {
         image.classList.add("qr-list-card__image--missing");
-        image.textContent = "QR antiguo\nRegenéralo";
+        image.textContent = coupon ? `QR asociado\nCupón ${coupon.code}` : "QR sin cupón";
         card.querySelector("[data-qr-show]").disabled = true;
         card.querySelector("[data-qr-download]").disabled = true;
         card.querySelector("[data-qr-share]").disabled = true;
