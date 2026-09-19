@@ -17,15 +17,8 @@
   };
 
   function showScreen(name) {
-    Object.values(screens).forEach((el) => {
-      if (!el) return;
-      el.classList.remove("is-active");
-      el.classList.add("hidden");
-    });
-    if (screens[name]) {
-      screens[name].classList.add("is-active");
-      screens[name].classList.remove("hidden");
-    }
+    Object.values(screens).forEach((el) => el && el.classList.remove("is-active"));
+    if (screens[name]) screens[name].classList.add("is-active");
   }
 
   function getTokenFromUrl() {
@@ -35,11 +28,9 @@
 
   function fillReveal(root, data) {
     root.querySelector("[data-field='greeting-name']").textContent = data.customer_name || "";
-    root.querySelectorAll("[data-field='discount'], [data-field='discount-display']").forEach((field) => { field.textContent = `${data.discount_percent}%`; });
-    root.querySelectorAll("[data-field='code'], [data-field='code-display']").forEach((field) => { field.textContent = data.code; });
-    root.querySelectorAll("[data-field='status-display']").forEach((field) => { field.textContent = data.status === "available" ? "Disponible" : data.status === "used" ? "Utilizado" : "Vencido"; });
-    root.querySelectorAll("[data-field='expires']").forEach((field) => { field.textContent = formatDateEs(data.expires_at); });
-    root.querySelectorAll("[data-field='status-display']").forEach((field) => { field.textContent = data.status === "available" ? "Disponible" : data.status === "used" ? "Utilizado" : "Expirado"; });
+    root.querySelector("[data-field='discount']").textContent = `${data.discount_percent}%`;
+    root.querySelector("[data-field='code']").textContent = data.code;
+    root.querySelector("[data-field='expires']").textContent = formatDateEs(data.expires_at);
 
     const statusNote = root.querySelector("[data-field='status-note']");
     if (statusNote) {
@@ -164,12 +155,24 @@
       setTimeout(() => {
         showScreen("envelope");
 
-        const envelope = document.getElementById("valentineCard");
+        const envelope = document.getElementById("envelope");
+        const seal = document.getElementById("envelope-seal");
+        const card = document.getElementById("envelope-card");
+        const sparkles = document.getElementById("envelope-sparkles");
+        const revealPanel = document.getElementById("envelope-reveal-panel");
+        const tapHint = document.getElementById("envelope-tap-hint");
 
         function handleOpen() {
           envelope.removeEventListener("click", handleOpen);
           envelope.removeEventListener("keydown", handleKey);
-          envelope.classList.add("open");
+          tapHint.style.opacity = "0";
+          window.ErimarAnimation.openEnvelope(
+            { envelope, seal, card, sparkles },
+            cfg,
+            () => {
+              revealPanel.classList.add("is-visible");
+            }
+          );
         }
         function handleKey(e) {
           if (e.key === "Enter" || e.key === " ") {
@@ -185,6 +188,7 @@
       // Ya había abierto su sorpresa antes: mostramos el mismo
       // cupón directamente, sin repetir la animación de regalo.
       fillReveal(screens.returning, result);
+      setupCopyButton(screens.returning, result.code);
       showScreen("returning");
     }
   }
