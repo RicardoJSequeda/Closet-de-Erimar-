@@ -26,18 +26,18 @@ button { -webkit-tap-highlight-color: transparent; }
 .auth-card input, input, select, textarea { width: 100%; padding: 12px 13px; border: 1px solid var(--a-border); border-radius: 12px; color: var(--a-ink); background: var(--a-paper); outline: none; transition: border-color .2s, box-shadow .2s, transform .2s; }
 input:focus, select:focus, textarea:focus { border-color: var(--a-rose); box-shadow: 0 0 0 4px rgba(184,111,136,.13); }
 .form-error { margin: 0; color: #a3392f; font-size: .82rem; }
-.admin-app { width: min(100%, 1120px); margin: 0 auto; padding: 28px 28px 72px; }
-.admin-header { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding-bottom: 24px; border-bottom: 1px solid var(--a-border); }
+.admin-app { width: min(100%, 960px); margin: 0 auto; padding: 10px 0 64px; }
+.admin-header { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 50px; padding-bottom: 18px; border-bottom: 1px solid var(--a-border); }
 .brand-lockup, .header-actions, .secure-status { display: flex; align-items: center; gap: 12px; }
 .brand-mark { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 14px; color: white; background: var(--a-wine); font: 600 .85rem var(--a-font-display); box-shadow: 0 8px 18px rgba(116,53,77,.2); }
 .secure-status { color: var(--a-muted); font-size: .75rem; }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #5b9a6a; box-shadow: 0 0 0 4px rgba(91,154,106,.12); }
-.admin-intro { display: flex; justify-content: space-between; align-items: end; gap: 24px; padding: 48px 0 30px; }
+.admin-intro { display: flex; justify-content: space-between; align-items: end; gap: 24px; padding: 38px 0 24px; }
 .admin-intro h1 { margin: 0; color: var(--a-wine-deep); font: 600 clamp(2rem, 4vw, 3.25rem) var(--a-font-display); letter-spacing: -.03em; }
 .intro-copy { max-width: 540px; margin: 10px 0 0; color: var(--a-muted); line-height: 1.6; font-size: .95rem; }
 .intro-detail { min-width: 130px; padding: 15px 18px; border-left: 2px solid var(--a-rose); color: var(--a-wine-deep); }
 .detail-label { display: block; margin-bottom: 4px; color: var(--a-muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .1em; }
-.admin-tabs { display: flex; gap: 8px; margin-bottom: 24px; padding: 6px; overflow-x: auto; border: 1px solid var(--a-border); border-radius: 16px; background: rgba(255,253,251,.65); }
+.admin-tabs { display: flex; gap: 8px; margin-bottom: 18px; padding: 5px; overflow-x: auto; border: 1px solid var(--a-border); border-radius: 13px; background: rgba(255,253,251,.72); }
 .tab-btn { flex: 1; min-width: max-content; display: inline-flex; justify-content: center; align-items: center; gap: 8px; padding: 12px 18px; border: 0; border-radius: 11px; color: var(--a-muted); background: transparent; cursor: pointer; transition: .2s ease; }
 .tab-btn:hover { color: var(--a-wine); background: var(--a-blush); }
 .tab-btn.is-active { color: #fff; background: var(--a-wine); box-shadow: 0 6px 16px rgba(116,53,77,.2); }
@@ -45,7 +45,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--a-rose); box-sha
 .tab-btn.is-active .tab-count { color: var(--a-wine); background: #fff; }
 .tab-panel { display: none; flex-direction: column; gap: 18px; animation: rise-in .3s ease both; }
 .tab-panel.is-active { display: flex; }
-.card { padding: 26px; border: 1px solid rgba(234,221,225,.8); border-radius: 20px; background: rgba(255,253,251,.9); box-shadow: var(--a-shadow); }
+.card { padding: 22px 20px; border: 1px solid rgba(234,221,225,.8); border-radius: 17px; background: rgba(255,253,251,.92); box-shadow: 0 14px 32px rgba(91,39,59,.055); }
 .card h2 { margin: 0 0 16px; color: var(--a-wine-deep); font: 600 1.25rem var(--a-font-display); }
 .card h3 { margin: 24px 0 12px; color: var(--a-wine-deep); font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; }
 .card-header-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -134,7 +134,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--a-rose); box-sha
 .btn[aria-busy="true"]::after { content: ""; position: absolute; inset: 50% auto auto 50%; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.7); border-right-color: transparent; border-radius: 50%; transform: translate(-50%, -50%); animation: spin .7s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .btn[aria-busy="true"]::after { animation: none; } }
 @keyframes spin { to { transform: rotate(360deg); } }
-@media (min-width: 820px) { #tab-clientes, #tab-campanas { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(0, 1.4fr); align-items: start; } #tab-qr, #tab-cupones { max-width: 980px; } }
-@media (max-width: 640px) { .admin-app { padding: 20px 15px 50px; } .admin-header, .admin-intro { align-items: flex-start; flex-direction: column; } .header-actions { width: 100%; justify-content: space-between; } .admin-intro { padding: 34px 0 24px; } .intro-detail { align-self: stretch; } .card { padding: 20px 16px; } .inline-form { flex-direction: column; } .inline-form .btn { width: 100%; } .auth-card { padding: 32px 24px; } }
+@media (min-width: 820px) { #tab-clientes, #tab-campanas { display: grid; grid-template-columns: minmax(265px, .78fr) minmax(0, 1.35fr); align-items: start; gap: 14px; } #tab-qr, #tab-cupones { max-width: 100%; } }
+@media (max-width: 640px) { .admin-app { width: 100%; padding: 10px 15px 50px; } .admin-header, .admin-intro { align-items: flex-start; flex-direction: column; } .header-actions { width: 100%; justify-content: space-between; } .admin-intro { padding: 34px 0 24px; } .intro-detail { align-self: stretch; } .card { padding: 20px 16px; } .inline-form { flex-direction: column; } .inline-form .btn { width: 100%; } .auth-card { padding: 32px 24px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 .focus-visible, :focus-visible { outline: 3px solid rgba(184,111,136,.4); outline-offset: 3px; }
