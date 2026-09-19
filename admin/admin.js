@@ -241,7 +241,7 @@
   async function loadCampaignsEverywhere() {
     const { data, error } = await client
       .from("campaigns")
-      .select("id, name, active, max_coupons, duration_days, created_at")
+      .select("id, name, active, max_coupons, duration_days, expires_on, created_at")
       .order("created_at", { ascending: false });
     if (error) {
       console.error(error);
@@ -278,7 +278,7 @@
         <div class="list-row">
           <div>
             <p class="list-row-title">${escapeHtml(c.name)} ${c.active ? "" : "· inactiva"}</p>
-            <p class="list-row-sub">${c.max_coupons} cupones · vigencia ${c.duration_days} días</p>
+            <p class="list-row-sub">${c.max_coupons} cupones · hasta ${c.expires_on ? new Date(`${c.expires_on}T23:59:59`).toLocaleDateString("es-CO") : `${c.duration_days} días`}</p>
           </div>
           <div class="list-row-actions">
             <select data-campaign-id="${c.id}" class="duration-select">
@@ -510,8 +510,10 @@
       const link = document.createElement("a");
       link.href = objectUrl;
       link.download = fileName;
+      document.body.appendChild(link);
       link.click();
-      URL.revokeObjectURL(objectUrl);
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
     });
     card.querySelector("[data-qr-share]")?.addEventListener("click", async () => {
       try {
@@ -545,7 +547,7 @@
     if (!container) return;
     const { data, error } = await client
       .from("qr_cards")
-      .select("id, token_value, active, created_at, customers(full_name), campaigns(name), coupons!inner(id, code, status, expires_at)")
+      .select("id, token_value, active, created_at, customers(full_name), campaigns(name), coupons(id, code, status, expires_at)")
       .order("created_at", { ascending: false });
     if (error) { console.error(error); container.innerHTML = '<p class="empty-state">No se pudieron cargar los QR.</p>'; return; }
     qrCardsCache = data || [];
