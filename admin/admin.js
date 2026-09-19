@@ -142,12 +142,15 @@
       return;
     }
     customersCache = data || [];
+    const { data: activeQrCards } = await client.from("qr_cards").select("customer_id").eq("active", true);
+    const customersWithQr = new Set((activeQrCards || []).map((qr) => qr.customer_id));
+    customersCache = customersCache.map((customer) => ({ ...customer, hasActiveQr: customersWithQr.has(customer.id) }));
     const countLabel = el("customer-count-label");
     const countBadge = el("customer-count");
     if (countLabel) countLabel.textContent = `${customersCache.length} clientas registradas`;
     if (countBadge) countBadge.textContent = customersCache.length;
     renderCustomerList(customersCache);
-    fillCustomerSelect(customersCache);
+    fillCustomerSelect(customersCache.filter((customer) => !customer.hasActiveQr));
   }
 
   function renderCustomerList(list) {
@@ -161,7 +164,7 @@
         (c) => `
         <div class="list-row" data-customer-id="${c.id}">
           <div>
-            <p class="list-row-title">${escapeHtml(c.full_name)}</p>
+            <p class="list-row-title">${escapeHtml(c.full_name)}${c.hasActiveQr ? " · QR activo" : ""}</p>
             <p class="list-row-sub">${escapeHtml(c.phone || "Sin teléfono")}</p>
             ${c.notes ? `<p class="list-row-sub">${escapeHtml(c.notes)}</p>` : ""}
           </div>
@@ -404,9 +407,13 @@ const tiers = [
   function setupQrForm() {
     el("qr-form").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const customerId = el("qr-customer").value;
-      const campaignId = el("qr-campaign").value;
-      if (!customerId || !campaignId) return;
+  const customerId = el("qr-customer").value;
+  const campaignId = el("qr-campaign").value;
+  if (!customerId || !campaignId) return;
+  if (customersCache.find((customer) => customer.id === customerId)?.hasActiveQr) {
+    alert("Esta clienta ya tiene un QR activo. Elimínalo antes de crear uno nuevo.");
+    return;
+  }
 
       const submitBtn = e.target.querySelector("button[type='submit']");
       submitBtn.disabled = true;
