@@ -50,6 +50,7 @@
       const waUrl = buildReturnUrl(data);
       if (waUrl) {
         returnBtn.href = waUrl;
+        returnBtn.textContent = cfg.RETURN_CTA_LABEL || "Quiero volver a comprar";
         returnBtn.target = "_blank";
         returnBtn.rel = "noopener";
         returnBtn.hidden = false;
