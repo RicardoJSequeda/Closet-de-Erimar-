@@ -428,8 +428,11 @@ const tiers = [
       submitBtn.textContent = "Generar QR";
 
       if (error || !data || !data.ok) {
-        alert("No se pudo generar el QR. Revisa la consola para más detalle.");
-        console.error(error || data);
+        const reason = data?.error === "customer_has_active_qr"
+          ? "Esta clienta ya tiene un QR activo. Elimina el QR anterior antes de crear uno nuevo."
+          : "No se pudo generar el QR. Revisa la consola para más detalle.";
+        alert(reason);
+        console.error("[v0] Error al generar QR:", error || data);
         return;
       }
 
@@ -458,6 +461,7 @@ const tiers = [
       el("qr-url").textContent = qrUrl;
       el("qr-result").hidden = false;
       el("qr-action-note").hidden = true;
+      await loadCustomers();
 
       const holder = el("qr-canvas-holder");
       holder.innerHTML = `<img src="${qrImageUrl}" alt="Código QR de ${escapeHtml(customerName)}" width="220" height="220" />`;
@@ -550,13 +554,15 @@ const tiers = [
       if (!window.confirm("¿Eliminar este QR? También se eliminará su cupón asociado.")) return;
       const { error } = await client.rpc("delete_qr_card", { p_qr_card_id: card.dataset.id });
       if (error) { alert("No se pudo eliminar el QR."); return; }
-      loadQrCards();
-      loadCouponsTable();
+      await loadQrCards();
+      await loadCustomers();
+      await loadCouponsTable();
     });
     card.querySelector("[data-qr-deactivate]")?.addEventListener("click", async () => {
       const { error } = await client.rpc("deactivate_qr_card", { p_qr_card_id: card.dataset.id });
       if (error) { alert("No se pudo desactivar el QR."); return; }
-      loadQrCards();
+      await loadQrCards();
+      await loadCustomers();
     });
   }
 
