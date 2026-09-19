@@ -1,457 +1,206 @@
-/* =========================================================
-   Closet de Erimar — style.css
-   Tokens de diseño + estructura base
-   ========================================================= */
-
+/* Closet de Erimar — sistema visual boutique */
 :root {
-  --color-cream: #fbf5f0;
-  --color-blush: #f4dee4;
-  --color-blush-soft: #f8e9ed;
-  --color-rose: #c9829a;
-  --color-wine: #6e2a3f;
-  --color-wine-deep: #4a1b2b;
-  --color-gold: #c8a35d;
-  --color-white: #ffffff;
-  --color-ink: #3a2530;
-
-  --font-display: "Playfair Display", "Iowan Old Style", Georgia, serif;
+  --color-canvas: #f6f1eb;
+  --color-surface: #fffdf9;
+  --color-surface-strong: #eadbd0;
+  --color-accent: #a65d68;
+  --color-accent-deep: #6a2d3b;
+  --color-ink: #2e2423;
+  --color-muted: #756866;
+  --color-line: rgba(106, 45, 59, 0.16);
+  --color-gold: #b89355;
+  --font-display: "Playfair Display", Georgia, serif;
   --font-body: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-
-  --radius-lg: 28px;
-  --radius-md: 18px;
-  --radius-sm: 10px;
-
-  --shadow-soft: 0 20px 60px -20px rgba(110, 42, 63, 0.28);
-  --shadow-card: 0 12px 32px -12px rgba(110, 42, 63, 0.22);
+  --radius-lg: 30px;
+  --radius-md: 20px;
+  --radius-sm: 12px;
+  --shadow-soft: 0 24px 70px rgba(71, 37, 37, 0.12);
+  --shadow-card: 0 18px 42px rgba(71, 37, 37, 0.16);
 }
 
 * { box-sizing: border-box; }
-
-html, body {
-  height: 100%;
-}
-
+html, body { min-height: 100%; }
 body {
   margin: 0;
   min-height: 100dvh;
   font-family: var(--font-body);
   color: var(--color-ink);
-  background:
-    radial-gradient(120% 90% at 50% -10%, var(--color-blush-soft) 0%, transparent 55%),
-    radial-gradient(140% 100% at 85% 110%, var(--color-blush) 0%, transparent 60%),
-    var(--color-cream);
+  background: var(--color-canvas);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
-
-.sr-only {
-  position: absolute;
-  width: 1px; height: 1px;
-  padding: 0; margin: -1px;
-  overflow: hidden;
-  clip: rect(0,0,0,0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.stage {
-  min-height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px 20px;
-}
-
-.screen {
-  display: none;
-  width: 100%;
-  max-width: 440px;
-}
-
-.screen.is-active {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* ---------- Marca ---------- */
-
-.wordmark {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-weight: 500;
-  color: var(--color-wine);
-  letter-spacing: 0.02em;
-  font-size: 1.1rem;
-  margin: 0 0 18px;
-}
-
-.wordmark--large {
-  font-size: 1.6rem;
-  margin-bottom: 28px;
-}
-
-/* ---------- Paneles genéricos (no-qr, error, returning) ---------- */
-
-.panel {
-  width: 100%;
-  background: var(--color-white);
-  border-radius: var(--radius-lg);
-  padding: 40px 32px;
-  text-align: center;
-  box-shadow: var(--shadow-soft);
-}
-
-.panel--soft {
-  background: linear-gradient(180deg, var(--color-white), var(--color-blush-soft));
-}
-
-.panel-title {
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 1.5rem;
-  color: var(--color-wine-deep);
-  margin: 0 0 12px;
-  line-height: 1.3;
-}
-
-.panel-text {
-  font-size: 0.98rem;
-  line-height: 1.6;
-  color: var(--color-ink);
-  opacity: 0.85;
-  margin: 0;
-}
-
-.panel-text--emphasis {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 1.15rem;
-  color: var(--color-wine);
-  opacity: 1;
-}
-
-/* ---------- Loader ---------- */
-
-.loader {
-  display: flex;
-  gap: 10px;
-}
-
-.loader-dot {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  background: var(--color-rose);
-  animation: erimar-bounce 1.1s ease-in-out infinite;
-}
-.loader-dot:nth-child(2) { animation-delay: 0.15s; }
-.loader-dot:nth-child(3) { animation-delay: 0.3s; }
-
-/* ---------- Intro ---------- */
-
-.intro {
-  text-align: center;
-  padding: 20px;
-}
-
-.intro-title {
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 1.55rem;
-  line-height: 1.4;
-  color: var(--color-wine-deep);
-  margin: 0 0 14px;
-}
-
-.intro-subtitle {
-  font-size: 1rem;
-  color: var(--color-rose);
-  margin: 0;
-}
-
-/* ---------- Escenario del sobre ---------- */
-
-.envelope-stage {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 28px;
-}
-
-.envelope-hint {
-  text-align: center;
-  font-size: 0.95rem;
-  color: var(--color-wine);
-  line-height: 1.5;
-  margin: 0;
-  transition: opacity 0.4s ease;
-}
-
-.envelope {
-  position: relative;
-  width: min(320px, 78vw);
-  height: 210px;
-  border: none;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.envelope-back {
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-md);
-  background: linear-gradient(155deg, var(--color-blush), var(--color-white));
-  box-shadow: var(--shadow-card);
-}
-
-.envelope-card {
-  position: absolute;
-  left: 10%;
-  right: 10%;
-  top: 14px;
-  height: 150px;
-  border-radius: var(--radius-sm);
-  background: var(--color-white);
-  box-shadow: 0 6px 18px rgba(110, 42, 63, 0.18);
-  z-index: 1;
-}
-
-.envelope-flap {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 105px;
-  background: linear-gradient(155deg, var(--color-rose), var(--color-wine));
-  clip-path: polygon(0 0, 100% 0, 50% 78%);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  z-index: 2;
-  transform-origin: top center;
-}
-
-.envelope-seal {
-  position: absolute;
-  top: 58px;
-  left: 50%;
-  transform: translate(-50%, 0);
-  width: 40px; height: 40px;
-  border-radius: 50%;
-  background: var(--color-gold);
-  color: var(--color-white);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  z-index: 3;
-  box-shadow: 0 4px 10px rgba(110, 42, 63, 0.3);
-}
-
-.envelope-sparkles {
-  position: absolute;
-  inset: -20px;
-  pointer-events: none;
-  z-index: 4;
-}
-
-.envelope-sparkles i {
-  position: absolute;
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--color-gold);
-  opacity: 0;
-}
-
-/* ---------- Panel de revelación (dentro del sobre) ---------- */
-
-.reveal-panel {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 14px;
-  opacity: 0;
-  transform: translateY(14px);
-  pointer-events: none;
-  transition: opacity 0.5s ease, transform 0.5s ease;
-}
-
-.reveal-panel.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-
-.reveal-eyebrow {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 1.15rem;
-  color: var(--color-wine-deep);
-  margin: 0;
-}
-
-.reveal-thanks {
-  font-size: 0.98rem;
-  color: var(--color-rose);
-  margin: 0;
-}
-
-/* ---------- Tarjeta de cupón ---------- */
-
-.coupon-card {
-  width: 100%;
-  background: var(--color-white);
-  border: 1px solid rgba(200, 163, 93, 0.35);
-  border-radius: var(--radius-lg);
-  padding: 30px 26px;
-  box-shadow: var(--shadow-card);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-.coupon-discount {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 3rem;
-  color: var(--color-wine);
-  margin: 0;
-  line-height: 1;
-}
-
-.coupon-label {
-  font-size: 0.85rem;
-  color: var(--color-ink);
-  opacity: 0.7;
-  margin: 0 0 14px;
-}
-
-.coupon-code {
-  font-family: var(--font-body);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  font-size: 1.05rem;
-  color: var(--color-wine-deep);
-  background: var(--color-blush-soft);
-  padding: 10px 18px;
-  border-radius: var(--radius-sm);
-  margin: 0 0 14px;
-}
-
-.coupon-status-note {
-  font-size: 0.85rem;
-  color: #a3392f;
-  margin: -6px 0 10px;
-}
-
-.coupon-expiry {
-  font-size: 0.85rem;
-  color: var(--color-ink);
-  opacity: 0.65;
-  margin: 10px 0 0;
-}
-
-.share-hint {
-  font-size: 0.82rem;
-  color: var(--color-rose);
-  text-align: center;
-  line-height: 1.5;
-  margin: 4px 0 0;
-  max-width: 320px;
-}
-
-/* ---------- Botones ---------- */
-
-.btn {
-  font-family: var(--font-body);
-  font-size: 0.95rem;
-  font-weight: 500;
-  border: none;
-  border-radius: 999px;
-  padding: 13px 26px;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-block;
-  text-align: center;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.btn:active { transform: scale(0.97); }
-
-.btn--ghost {
-  background: var(--color-blush-soft);
-  color: var(--color-wine-deep);
-  margin-bottom: 4px;
-}
-
-.btn--primary {
-  background: linear-gradient(135deg, var(--color-rose), var(--color-wine));
-  color: var(--color-white);
-  width: 100%;
-  margin-top: 6px;
-  box-shadow: 0 10px 24px -10px rgba(110, 42, 63, 0.5);
-}
-
-.btn--link {
-  background: none;
-  color: var(--color-rose);
-  font-size: 0.85rem;
-  text-decoration: underline;
-  padding: 8px;
-}
-
-/* ---------- Modal de términos ---------- */
-
-.modal {
+body::before, body::after {
+  content: "";
   position: fixed;
-  inset: 0;
-  background: rgba(74, 27, 43, 0.45);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  opacity: 0;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(2px);
   pointer-events: none;
-  transition: opacity 0.25s ease;
-  z-index: 50;
-  padding: 0;
 }
+body::before { width: 32rem; height: 32rem; top: -16rem; left: -12rem; background: #ead8d2; opacity: .65; }
+body::after { width: 28rem; height: 28rem; right: -14rem; bottom: -12rem; background: #e8d8c6; opacity: .6; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible { outline: 3px solid rgba(184,147,85,.55); outline-offset: 4px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
-.modal.is-open {
-  opacity: 1;
-  pointer-events: auto;
-}
+.stage { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 28px 18px; }
+.stage::before { content: "ERIMAR / EXPERIENCIA PRIVADA"; position: fixed; top: 22px; left: 24px; font-size: .64rem; letter-spacing: .18em; color: var(--color-muted); }
+.stage::after { content: "01 — 03"; position: fixed; top: 22px; right: 24px; font-size: .64rem; letter-spacing: .18em; color: var(--color-muted); }
+.screen { display: none; width: 100%; max-width: 460px; }
+.screen.is-active { display: flex; flex-direction: column; align-items: center; }
 
-.modal-panel {
-  width: 100%;
-  max-width: 440px;
-  background: var(--color-white);
-  border-radius: 24px 24px 0 0;
-  padding: 30px 26px 34px;
-  transform: translateY(16px);
-  transition: transform 0.25s ease;
-  max-height: 80vh;
-  overflow-y: auto;
-}
+.wordmark { margin: 0 0 22px; color: var(--color-accent-deep); font-family: var(--font-display); font-size: 1.08rem; font-style: italic; letter-spacing: .04em; }
+.wordmark--large { font-size: clamp(1.4rem, 5vw, 1.8rem); margin-bottom: 30px; }
+.panel { width: 100%; padding: clamp(30px, 7vw, 52px) clamp(24px, 7vw, 42px); text-align: center; background: rgba(255,253,249,.8); border: 1px solid var(--color-line); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); backdrop-filter: blur(12px); }
+.panel--soft { background: linear-gradient(160deg, rgba(255,253,249,.92), rgba(234,219,208,.8)); }
+.panel-title { margin: 0 0 14px; color: var(--color-accent-deep); font-family: var(--font-display); font-size: clamp(1.55rem, 5vw, 2rem); font-weight: 500; line-height: 1.15; }
+.panel-text { margin: 0; color: var(--color-muted); font-size: .96rem; line-height: 1.7; }
+.panel-text--emphasis { color: var(--color-accent-deep); font-family: var(--font-display); font-size: 1.15rem; font-style: italic; }
 
-.modal.is-open .modal-panel {
-  transform: translateY(0);
-}
+.loader { display: flex; gap: 9px; }
+.loader-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-accent); animation: erimar-bounce 1.1s ease-in-out infinite; }
+.loader-dot:nth-child(2) { animation-delay: .15s; } .loader-dot:nth-child(3) { animation-delay: .3s; }
+.intro { max-width: 380px; padding: 24px; text-align: center; }
+.intro-title { margin: 0 0 16px; color: var(--color-accent-deep); font-family: var(--font-display); font-size: clamp(1.8rem, 7vw, 2.65rem); font-weight: 500; line-height: 1.08; letter-spacing: -.02em; }
+.intro-subtitle { margin: 0; color: var(--color-muted); font-size: .95rem; letter-spacing: .04em; }
 
-.modal-panel h2 {
-  font-family: var(--font-display);
-  font-weight: 500;
-  color: var(--color-wine-deep);
-  margin: 0 0 14px;
-  font-size: 1.2rem;
-}
+.envelope-stage { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 26px; }
+.envelope-hint { margin: 0; color: var(--color-accent-deep); font-size: .8rem; font-weight: 600; letter-spacing: .14em; line-height: 1.55; text-align: center; text-transform: uppercase; }
+.envelope { position: relative; width: min(340px, 82vw); height: 218px; padding: 0; border: 0; background: transparent; cursor: pointer; perspective: 700px; }
+.envelope-back { position: absolute; inset: 0; border: 1px solid rgba(106,45,59,.18); border-radius: var(--radius-md); background: linear-gradient(145deg, #f4e6dc, #dfc4bd); box-shadow: var(--shadow-card); }
+.envelope-card { position: absolute; z-index: 1; top: 15px; left: 10%; right: 10%; height: 152px; border-radius: var(--radius-sm); background: var(--color-surface); box-shadow: 0 8px 22px rgba(71,37,37,.16); }
+.envelope-card::before { content: "CDE"; position: absolute; inset: 0; display: grid; place-items: center; color: var(--color-gold); font-family: var(--font-display); font-size: 1.8rem; letter-spacing: .18em; }
+.envelope-flap { position: absolute; z-index: 2; top: 0; left: 0; right: 0; height: 112px; border-radius: var(--radius-md) var(--radius-md) 0 0; background: linear-gradient(145deg, #b8757f, var(--color-accent-deep)); clip-path: polygon(0 0,100% 0,50% 80%); transform-origin: top center; transform-style: preserve-3d; }
+.envelope-seal { position: absolute; z-index: 3; top: 62px; left: 50%; display: grid; place-items: center; width: 42px; height: 42px; border: 2px solid rgba(255,255,255,.48); border-radius: 50%; color: #fff; background: var(--color-gold); box-shadow: 0 5px 12px rgba(71,37,37,.28); font-size: 0; transform: translateX(-50%); }
+.envelope-seal::after { content: "E"; font-family: var(--font-display); font-size: 1.2rem; }
+.envelope-sparkles { position: absolute; inset: -20px; z-index: 4; pointer-events: none; }
+.envelope-sparkles i { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--color-gold); opacity: 0; }
 
-.terms-body {
-  white-space: pre-line;
-  font-size: 0.9rem;
-  line-height: 1.7;
-  color: var(--color-ink);
-  opacity: 0.85;
-  margin: 0 0 22px;
-}
+.reveal-panel { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 14px; opacity: 0; transform: translateY(14px); pointer-events: none; transition: opacity .5s ease, transform .5s ease; }
+.reveal-panel.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.reveal-eyebrow { margin: 0; color: var(--color-accent-deep); font-family: var(--font-display); font-size: 1.2rem; font-style: italic; text-align: center; }
+.reveal-thanks { margin: 0; color: var(--color-muted); font-size: .95rem; }
+.coupon-card { position: relative; width: 100%; padding: 32px 26px 28px; display: flex; flex-direction: column; align-items: center; gap: 7px; overflow: hidden; background: var(--color-surface); border: 1px solid rgba(184,147,85,.45); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
+.coupon-card::before { content: "CLOSET DE ERIMAR"; position: absolute; top: 15px; font-size: .58rem; letter-spacing: .18em; color: var(--color-gold); }
+.coupon-discount { margin: 16px 0 0; color: var(--color-accent-deep); font-family: var(--font-display); font-size: clamp(3.3rem, 15vw, 4.4rem); font-weight: 600; line-height: .95; }
+.coupon-label { margin: 0 0 15px; color: var(--color-muted); font-size: .82rem; letter-spacing: .03em; }
+.coupon-code { margin: 0 0 12px; padding: 11px 18px; color: var(--color-accent-deep); background: var(--color-surface-strong); border-radius: var(--radius-sm); font-weight: 600; letter-spacing: .11em; }
+.coupon-status-note { margin: -2px 0 8px; color: #a3392f; font-size: .84rem; }
+.coupon-expiry { margin: 10px 0 0; color: var(--color-muted); font-size: .78rem; }
+.share-hint { max-width: 330px; margin: 4px 0 0; color: var(--color-muted); font-size: .78rem; line-height: 1.55; text-align: center; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 12px 22px; border: 0; border-radius: 999px; font: 500 .9rem var(--font-body); text-align: center; text-decoration: none; cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; }
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(0) scale(.98); }
+.btn--ghost { margin-bottom: 4px; color: var(--color-accent-deep); background: #f1e4de; }
+.btn--primary { width: 100%; margin-top: 6px; color: #fff; background: var(--color-accent-deep); box-shadow: 0 12px 25px rgba(106,45,59,.22); }
+.btn--primary:hover { background: #51202d; box-shadow: 0 16px 30px rgba(106,45,59,.28); }
+.btn--link { min-height: auto; padding: 8px; color: var(--color-accent); background: transparent; font-size: .82rem; text-decoration: underline; }
+
+.modal { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; padding: 0; background: rgba(46,36,35,.46); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+.modal.is-open { opacity: 1; pointer-events: auto; }
+.modal-panel { width: 100%; max-width: 460px; max-height: 80vh; padding: 30px 26px 34px; overflow-y: auto; border-radius: 26px 26px 0 0; background: var(--color-surface); transform: translateY(16px); transition: transform .25s ease; }
+.modal.is-open .modal-panel { transform: translateY(0); }
+.modal-panel h2 { margin: 0 0 14px; color: var(--color-accent-deep); font-family: var(--font-display); font-size: 1.35rem; font-weight: 500; }
+.terms-body { margin: 0 0 22px; color: var(--color-muted); font-size: .9rem; line-height: 1.7; white-space: pre-line; }
+
+@media (min-width: 720px) { .stage { padding: 70px 20px; } .modal { align-items: center; padding: 20px; } .modal-panel { border-radius: 26px; } }
+@media (max-width: 360px) { .panel { padding: 28px 20px; } .envelope { height: 190px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+@media (prefers-contrast: more) { .btn--primary, .coupon-code { border: 2px solid currentColor; } }
+
+@keyframes erimar-bounce { 0%,80%,100% { transform: scale(.6); opacity: .5; } 40% { transform: scale(1); opacity: 1; } }
+@keyframes erimar-fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.screen.is-active { animation: erimar-fade-in .5s ease both; }
+@keyframes erimar-envelope-idle { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.envelope:not(.is-opening) { animation: erimar-envelope-idle 3.2s ease-in-out infinite; }
+.envelope-seal.seal-pop { animation: erimar-seal-pop .45s ease forwards; }
+@keyframes erimar-seal-pop { 0% { transform: translateX(-50%) scale(1); opacity: 1; } 40% { transform: translateX(-50%) translateY(-6px) scale(1.15); } 100% { transform: translateX(-50%) translateY(-14px) scale(.6); opacity: 0; } }
+.envelope.flap-open .envelope-flap { animation: erimar-flap-open .55s cubic-bezier(.22,1,.36,1) forwards; }
+@keyframes erimar-flap-open { to { transform: rotateX(-165deg); } }
+.envelope-card.card-out { animation: erimar-card-out .6s cubic-bezier(.22,1,.36,1) forwards; }
+@keyframes erimar-card-out { to { transform: translateY(-64px) scale(1.04); box-shadow: 0 20px 40px -14px rgba(110,42,63,.35); } }
+.envelope-sparkles.sparkle-burst i { animation: erimar-sparkle .7s ease-out forwards; }
+.envelope-sparkles i:nth-child(1) { top: 40%; left: 20%; } .envelope-sparkles i:nth-child(2) { top: 30%; left: 75%; animation-delay: .05s; } .envelope-sparkles i:nth-child(3) { top: 60%; left: 15%; animation-delay: .1s; } .envelope-sparkles i:nth-child(4) { top: 55%; left: 82%; animation-delay: .08s; } .envelope-sparkles i:nth-child(5) { top: 20%; left: 50%; animation-delay: .15s; } .envelope-sparkles i:nth-child(6) { top: 70%; left: 50%; animation-delay: .12s; }
+@keyframes erimar-sparkle { 0% { opacity: 0; transform: scale(.4); } 40% { opacity: 1; } 100% { opacity: 0; transform: scale(1.2) translateY(-22px); } }
+@media (max-width: 600px) { .stage::before, .stage::after { top: 14px; font-size: .52rem; } .stage::before { left: 14px; } .stage::after { right: 14px; } }
+@media (max-height: 620px) and (orientation: landscape) { .stage { padding-top: 54px; padding-bottom: 24px; } }
+
+/* Términos: mantener el foco en el diálogo abierto */
+.modal[aria-hidden="true"] { visibility: hidden; }
+.modal[aria-hidden="false"] { visibility: visible; }
+
+@media (prefers-reduced-motion: no-preference) { .coupon-card { animation: card-arrive .6s .12s both; } }
+@keyframes card-arrive { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* Compatibilidad con estilos heredados: toda la experiencia vive en style.css. */
+.panel--soft .wordmark { color: var(--color-accent-deep); }
+.hidden { display: none !important; }
+
+/* Prevent accidental horizontal overflow on long coupon codes. */
+.coupon-code { max-width: 100%; overflow-wrap: anywhere; }
+
+/* Use a comfortable hit target for touch devices. */
+@media (pointer: coarse) { .btn { min-height: 48px; } }
+
+/* Preserve readable content when a device has a notch. */
+@supports (padding: max(0px)) { .stage { padding-left: max(18px, env(safe-area-inset-left)); padding-right: max(18px, env(safe-area-inset-right)); } }
+
+/* Avoid transparent text selection surprises on the tactile envelope. */
+.envelope, .envelope * { user-select: none; }
+
+/* A calmer canvas on very wide screens. */
+@media (min-width: 1200px) { body::before { width: 40rem; height: 40rem; } body::after { width: 36rem; height: 36rem; } }
+
+/* Ensure disabled-like coupon states retain contrast. */
+.coupon-status-note[hidden], .share-hint[hidden], .btn[hidden] { display: none; }
+
+/* Keep the primary action visually separated from utility links. */
+.reveal-panel > .btn--link { margin-top: 2px; }
+
+/* Small ornamental divider without adding extra markup. */
+.panel::after { content: "·  ·  ·"; display: block; margin-top: 24px; color: var(--color-gold); letter-spacing: .35em; }
+.panel .coupon-card::after { content: ""; position: absolute; bottom: 0; left: 12%; right: 12%; height: 2px; background: var(--color-gold); opacity: .5; }
+
+/* Keep the gift experience centered when copy grows. */
+#screen-envelope, #screen-returning { padding-top: 12px; }
+
+/* High-quality fallback if the remote font is unavailable. */
+@font-face { font-family: "Erimar Fallback"; src: local("Georgia"); }
+
+/* Fine tune text rhythm on small screens. */
+@media (max-width: 480px) { .reveal-eyebrow { max-width: 300px; line-height: 1.25; } .coupon-card { padding-inline: 20px; } }
+
+/* Keep the modal action easy to reach. */
+.modal-panel .btn--primary { margin-top: 0; }
+
+/* Prevent body scroll behind the active modal where supported. */
+body:has(.modal.is-open) { overflow: hidden; }
+
+/* The static page has no shell chrome beyond its content. */
+.stage > .screen { isolation: isolate; }
+
+/* Last-resort legacy browser fallback for the status note. */
+[hidden] { display: none !important; }
+
+/* End of visual system. */
+
+/* animation.css still owns the keyframe names in older deployments. */
+@supports not (selector(:has(*))) { body { overflow-x: hidden; } }
+
+/* Keep layouts stable while scripts populate dynamic fields. */
+[data-field="code"] { min-width: 9ch; text-align: center; }
+
+/* Soft separator around the coupon metadata. */
+.coupon-expiry { border-top: 1px solid var(--color-line); padding-top: 10px; width: 100%; text-align: center; }
+
+/* Never let a long greeting break the card. */
+.reveal-thanks, .panel-text { overflow-wrap: anywhere; }
+
+/* Keep the interaction affordance visually obvious. */
+.envelope:hover .envelope-back { box-shadow: 0 22px 48px rgba(71,37,37,.2); }
+
+/* Maintain button contrast in dark-mode browser preferences. */
+@media (prefers-color-scheme: dark) { body { color-scheme: light; } }
+
+/* Finish. */

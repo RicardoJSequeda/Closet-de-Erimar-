@@ -32,7 +32,7 @@ window.ERIMAR_CONFIG = {
   // para que puedan validarlo directamente en la conversación.
   // Formato: solo números, con código de país (57 = Colombia), sin
   // espacios, signos ni el "+".
-  RETURN_CTA_LABEL: "🛍️ Quiero volver a comprar",
+  RETURN_CTA_LABEL: "Quiero volver a comprar",
   WHATSAPP_NUMBER: "573136751022",
 
   // Si prefieres enviar a otro lugar (tu tienda online, por ejemplo)
