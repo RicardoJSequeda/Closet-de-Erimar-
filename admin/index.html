@@ -23,22 +23,40 @@
       <input type="password" id="login-password" required autocomplete="current-password" />
     </label>
     <p id="login-error" class="form-error" hidden></p>
-    <button type="submit" class="btn btn--primary">Ingresar</button>
+    <button type="submit" class="btn btn--primary" id="login-submit">Ingresar</button>
   </form>
 </section>
 
 <!-- Panel real, oculto hasta confirmar sesión + membresía admin -->
 <div id="admin-app" class="admin-app" hidden>
   <header class="admin-header">
-    <p class="wordmark">Closet de Erimar · Admin</p>
-    <button id="logout-btn" class="btn btn--ghost btn--small">Cerrar sesión</button>
+    <div class="brand-lockup">
+      <span class="brand-mark" aria-hidden="true">CE</span>
+      <div>
+        <p class="eyebrow">Espacio privado</p>
+        <p class="wordmark">Closet de Erimar</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="secure-status"><span class="status-dot" aria-hidden="true"></span> Sesión segura</span>
+      <button id="logout-btn" class="btn btn--ghost btn--small">Cerrar sesión</button>
+    </div>
   </header>
 
-  <nav class="admin-tabs">
-    <button class="tab-btn is-active" data-tab="clientes">Clientes</button>
-    <button class="tab-btn" data-tab="qr">Crear QR</button>
-    <button class="tab-btn" data-tab="campanas">Campañas</button>
-    <button class="tab-btn" data-tab="cupones">Cupones</button>
+  <section class="admin-intro">
+    <div>
+      <p class="eyebrow">Panel de control</p>
+      <h1>Gestiona tu comunidad</h1>
+      <p class="intro-copy">Crea experiencias especiales, administra tus clientas y mantén el control de tus campañas.</p>
+    </div>
+    <div class="intro-detail"><span class="detail-label">Hoy</span><strong id="admin-date">—</strong></div>
+  </section>
+
+  <nav class="admin-tabs" aria-label="Secciones del panel">
+    <button class="tab-btn is-active" id="tab-btn-clientes" data-tab="clientes" role="tab" aria-controls="tab-clientes" aria-selected="true">Clientes <span class="tab-count" id="customer-count">0</span></button>
+    <button class="tab-btn" id="tab-btn-qr" data-tab="qr" role="tab" aria-controls="tab-qr" aria-selected="false">Crear QR</button>
+    <button class="tab-btn" id="tab-btn-campanas" data-tab="campanas" role="tab" aria-controls="tab-campanas" aria-selected="false">Campañas</button>
+    <button class="tab-btn" id="tab-btn-cupones" data-tab="cupones" role="tab" aria-controls="tab-cupones" aria-selected="false">Cupones</button>
   </nav>
 
   <!-- CLIENTES -->
@@ -58,6 +76,7 @@
         <h2>Clientas</h2>
         <input type="search" id="customer-search" placeholder="Buscar por nombre…" />
       </div>
+      <div class="list-toolbar"><span class="form-help" id="customer-count-label">0 clientas</span></div>
       <div id="customer-list" class="list"></div>
     </div>
   </section>
@@ -89,6 +108,17 @@
         </div>
         <p id="qr-action-note" class="qr-note" hidden></p>
       </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row">
+        <div>
+          <h2>QR creados</h2>
+          <p class="form-help">Cada clienta conserva un único QR activo. Puedes volver a mostrarlo, descargarlo o desactivarlo.</p>
+        </div>
+        <button type="button" id="refresh-qr-list" class="btn btn--ghost btn--small">Actualizar</button>
+      </div>
+      <div id="qr-list" class="qr-list"></div>
     </div>
   </section>
 
