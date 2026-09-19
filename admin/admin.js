@@ -316,16 +316,19 @@
   }
 
   function setupCampaignForm() {
-    el("campaign-form").addEventListener("submit", async (e) => {
+    const form = el("campaign-form");
+    if (!form) return;
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const name = el("campaign-name").value.trim();
-      const expiresOn = el("campaign-expires-on").value;
+      const readValue = (id) => el(id)?.value ?? "";
+      const name = readValue("campaign-name").trim();
+      const expiresOn = readValue("campaign-expires-on");
       const today = new Date();
       const expiry = new Date(`${expiresOn}T23:59:59`);
       const duration = Math.max(1, Math.ceil((expiry - today) / 86400000));
-const t10 = parseInt(el("tier-10").value || "0", 10);
- const t15 = parseInt(el("tier-15").value || "0", 10);
- const t20 = parseInt(el("tier-20").value || "0", 10);
+      const t10 = parseInt(readValue("tier-10") || "0", 10);
+      const t15 = parseInt(readValue("tier-15") || "0", 10);
+      const t20 = parseInt(readValue("tier-20") || "0", 10);
  const maxCoupons = t10 + t15 + t20;
 
       if (!name || !expiresOn || Number.isNaN(expiry.getTime()) || expiry <= today || maxCoupons <= 0) {
@@ -355,10 +358,10 @@ const tiers = [
       if (data.campaign_id) {
         await client.from("campaigns").update({ expires_on: expiresOn }).eq("id", data.campaign_id);
       }
-      el("campaign-form").reset();
-el("tier-10").value = 6;
-el("tier-15").value = 3;
-el("tier-20").value = 1;
+      form.reset();
+      if (el("tier-10")) el("tier-10").value = 6;
+      if (el("tier-15")) el("tier-15").value = 3;
+      if (el("tier-20")) el("tier-20").value = 1;
       loadCampaignsEverywhere();
     });
   }
