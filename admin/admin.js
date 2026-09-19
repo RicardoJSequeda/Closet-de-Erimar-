@@ -556,8 +556,23 @@
       card.querySelectorAll(".qr-list-card__meta")[1].textContent = `Creado ${new Date(row.created_at).toLocaleDateString("es-CO")}`;
       card.prepend(image);
       container.append(card);
-      if (!row.token_value) continue;
-      const qrImageUrl = await buildQrImage(row.token_value);
+      if (!row.token_value) {
+        image.classList.add("qr-list-card__image--missing");
+        image.textContent = "QR antiguo\nRegenéralo";
+        card.querySelector("[data-qr-show]").disabled = true;
+        card.querySelector("[data-qr-download]").disabled = true;
+        card.querySelector("[data-qr-share]").disabled = true;
+        continue;
+      }
+      let qrImageUrl;
+      try {
+        qrImageUrl = await buildQrImage(row.token_value);
+      } catch (error) {
+        console.error("[v0] No se pudo dibujar el QR guardado", error);
+        image.classList.add("qr-list-card__image--missing");
+        image.textContent = "QR no disponible";
+        continue;
+      }
       image.innerHTML = `<img src="${qrImageUrl}" alt="Código QR de ${escapeHtml(customerName)}" width="84" height="84">`;
       card.querySelector("[data-qr-show]").addEventListener("click", () => {
         el("qr-result-customer").textContent = customerName;
