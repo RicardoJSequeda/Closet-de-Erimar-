@@ -31,6 +31,17 @@
     root.querySelector("[data-field='discount']").textContent = `${data.discount_percent}%`;
     root.querySelector("[data-field='code']").textContent = data.code;
     root.querySelector("[data-field='expires']").textContent = formatDateEs(data.expires_at);
+  root.querySelectorAll("[data-field='countdown']").forEach((field) => {
+    const update = () => {
+      const remaining = new Date(data.expires_at).getTime() - Date.now();
+      if (remaining <= 0) { field.textContent = "Cupón vencido"; return; }
+      const days = Math.floor(remaining / 86400000);
+      const hours = Math.floor((remaining % 86400000) / 3600000);
+      field.textContent = `Quedan ${days} días y ${hours} horas`;
+    };
+    update();
+    window.setInterval(update, 3600000);
+  });
 
     const statusNote = root.querySelector("[data-field='status-note']");
     if (statusNote) {

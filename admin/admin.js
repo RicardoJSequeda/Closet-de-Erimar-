@@ -114,6 +114,7 @@
     const today = new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "long", year: "numeric" }).format(new Date());
     if (el("admin-date")) el("admin-date").textContent = today;
     setupTabs();
+    setupCustomerModal();
     loadCustomers();
     loadCampaignsEverywhere();
     setupCustomerForm();
@@ -199,25 +200,27 @@
     renderCustomerList(filtered);
   });
 
+  function setupCustomerModal() {
+    const modal = el("customer-modal");
+    el("open-customer-modal")?.addEventListener("click", () => modal?.showModal());
+    el("close-customer-modal")?.addEventListener("click", () => modal?.close());
+    modal?.addEventListener("click", (event) => { if (event.target === modal) modal.close(); });
+  }
+
   function setupCustomerForm() {
     el("customer-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const full_name = el("customer-name").value.trim();
-      const phone = el("customer-phone").value.trim();
-      const notes = el("customer-notes").value.trim();
       if (!full_name) return;
 
-      const { error } = await client.from("customers").insert({
-        full_name,
-        phone: phone || null,
-        notes: notes || null,
-      });
+      const { error } = await client.from("customers").insert({ full_name });
       if (error) {
         alert("No se pudo guardar la clienta.");
         console.error(error);
         return;
       }
       el("customer-form").reset();
+      el("customer-modal")?.close();
       loadCustomers();
     });
   }
@@ -238,7 +241,7 @@
   async function loadCampaignsEverywhere() {
     const { data, error } = await client
       .from("campaigns")
-      .select("id, name, active, max_coupons, duration_days, created_at")
+      .select("id, name, active, max_coupons, duration_days, expires_on, created_at")
       .order("created_at", { ascending: false });
     if (error) {
       console.error(error);
@@ -275,7 +278,7 @@
         <div class="list-row">
           <div>
             <p class="list-row-title">${escapeHtml(c.name)} ${c.active ? "" : "· inactiva"}</p>
-            <p class="list-row-sub">${c.max_coupons} cupones · vigencia ${c.duration_days} días</p>
+            <p class="list-row-sub">${c.max_coupons} cupones · hasta ${c.expires_on ? new Date(`${c.expires_on}T23:59:59`).toLocaleDateString("es-CO") : `${c.duration_days} días`}</p>
           </div>
           <div class="list-row-actions">
             <select data-campaign-id="${c.id}" class="duration-select">
@@ -316,14 +319,17 @@
     el("campaign-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const name = el("campaign-name").value.trim();
-      const duration = parseInt(el("campaign-duration").value, 10);
+      const expiresOn = el("campaign-expires-on").value;
+      const today = new Date();
+      const expiry = new Date(`${expiresOn}T23:59:59`);
+      const duration = Math.max(1, Math.ceil((expiry - today) / 86400000));
       const t5 = parseInt(el("tier-5").value || "0", 10);
       const t10 = parseInt(el("tier-10").value || "0", 10);
       const t15 = parseInt(el("tier-15").value || "0", 10);
       const maxCoupons = t5 + t10 + t15;
 
-      if (!name || maxCoupons <= 0) {
-        alert("Revisa el nombre y la distribución de cupones.");
+      if (!name || !expiresOn || Number.isNaN(expiry.getTime()) || expiry <= today || maxCoupons <= 0) {
+        alert("Revisa el nombre, la fecha de vencimiento y la distribución de cupones.");
         return;
       }
 
@@ -346,6 +352,9 @@
         return;
       }
 
+      if (data.campaign_id) {
+        await client.from("campaigns").update({ expires_on: expiresOn }).eq("id", data.campaign_id);
+      }
       el("campaign-form").reset();
       el("tier-5").value = 6;
       el("tier-10").value = 3;
@@ -436,15 +445,13 @@
 
       el("qr-download").onclick = async () => {
         try {
-          const blob = await dataUrlToBlob(qrImageUrl);
-          const objectUrl = URL.createObjectURL(blob);
           const link = document.createElement("a");
-          link.href = objectUrl;
+          link.href = qrImageUrl;
           link.download = fileName;
+          link.rel = "noopener";
           document.body.appendChild(link);
           link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(objectUrl);
+          link.remove();
         } catch (err) {
           console.error(err);
           // El QR vive localmente en una URL data:, por lo que se puede
@@ -453,6 +460,8 @@
           showQrNote("Se abrió el QR en una pestaña nueva: mantén presionada la imagen (o clic derecho) para guardarla.");
         }
       };
+
+      await loadQrCards();
 
       el("qr-share").onclick = async () => {
         try {
@@ -470,11 +479,12 @@
             await navigator.share({ title: "Closet de Erimar", text: `Tarjeta QR de ${customerName}`, url: qrUrl });
             return;
           }
-          throw new Error("share_not_supported");
+          await navigator.clipboard.writeText(qrUrl);
+          showQrNote("Enlace del cupón copiado. Puedes pegarlo para compartirlo.");
         } catch (err) {
           console.error(err);
-          window.open(qrImageUrl, "_blank");
-          showQrNote("Tu navegador no permite compartir directamente: se abrió el QR en una pestaña nueva.");
+          window.open(qrImageUrl, "_blank", "noopener");
+          showQrNote("Se abrió el QR en una pestaña nueva para compartirlo manualmente.");
         }
       };
     });
@@ -496,13 +506,12 @@
   function bindQrActions(card, qrImageUrl, customerName) {
     const fileName = `qr-${customerName.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.png`;
     card.querySelector("[data-qr-download]")?.addEventListener("click", async () => {
-      const blob = await dataUrlToBlob(qrImageUrl);
-      const objectUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = objectUrl;
-      link.download = fileName;
-      link.click();
-      URL.revokeObjectURL(objectUrl);
+  link.href = qrImageUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
     });
     card.querySelector("[data-qr-share]")?.addEventListener("click", async () => {
       try {
@@ -512,9 +521,15 @@
           await navigator.share({ files: [file], title: "Closet de Erimar", text: `QR de ${customerName}` });
         } else if (navigator.share) {
           await navigator.share({ title: "Closet de Erimar", url: qrPublicUrl(card.dataset.token) });
-        } else throw new Error("share_not_supported");
+        } else {
+          await navigator.clipboard.writeText(qrPublicUrl(card.dataset.token));
+          showQrNote("Enlace del cupón copiado.");
+        }
       } catch (error) {
-        if (error.name !== "AbortError") showQrNote("Compartir no está disponible en este navegador.");
+        if (error.name !== "AbortError") {
+          window.open(qrImageUrl, "_blank", "noopener");
+          showQrNote("Se abrió el QR para compartirlo manualmente.");
+        }
       }
     });
     card.querySelector("[data-qr-delete]")?.addEventListener("click", async () => {
@@ -536,7 +551,7 @@
     if (!container) return;
     const { data, error } = await client
       .from("qr_cards")
-      .select("id, token_value, active, created_at, customers(full_name), campaigns(name)")
+      .select("id, token_value, active, created_at, customers(full_name), campaigns(name), coupons(id, code, status, expires_at)")
       .order("created_at", { ascending: false });
     if (error) { console.error(error); container.innerHTML = '<p class="empty-state">No se pudieron cargar los QR.</p>'; return; }
     qrCardsCache = data || [];
@@ -547,17 +562,33 @@
       const card = document.createElement("article");
       card.className = `qr-list-card${row.active ? "" : " is-inactive"}`;
       card.dataset.id = row.id;
+      const coupon = Array.isArray(row.coupons) ? row.coupons[0] : row.coupons;
       card.dataset.token = row.token_value || "";
       const image = document.createElement("div");
       image.className = "qr-list-card__image";
       card.innerHTML = `<div class="qr-list-card__info"><p class="qr-list-card__title"></p><p class="qr-list-card__meta"></p><p class="qr-list-card__meta"></p></div><div class="qr-list-card__actions"><button type="button" class="btn btn--ghost btn--small" data-qr-show>Mostrar</button><button type="button" class="btn btn--ghost btn--small" data-qr-download>Descargar</button><button type="button" class="btn btn--ghost btn--small" data-qr-share>Compartir</button><button type="button" class="btn btn--ghost btn--small" data-qr-deactivate ${row.active ? "" : "disabled"}>Desactivar</button><button type="button" class="btn btn--danger btn--small" data-qr-delete>Eliminar</button></div>`;
       card.querySelector(".qr-list-card__title").textContent = customerName;
-      card.querySelector(".qr-list-card__meta").textContent = `${row.campaigns?.name || "Campaña"} · ${row.active ? "Activo" : "Inactivo"}`;
+      card.querySelector(".qr-list-card__meta").textContent = `${row.campaigns?.name || "Campaña"} · Cupón ${coupon?.code || "sin código"} · ${coupon?.status || "sin estado"}`;
       card.querySelectorAll(".qr-list-card__meta")[1].textContent = `Creado ${new Date(row.created_at).toLocaleDateString("es-CO")}`;
       card.prepend(image);
       container.append(card);
-      if (!row.token_value) continue;
-      const qrImageUrl = await buildQrImage(row.token_value);
+      if (!row.token_value) {
+        image.classList.add("qr-list-card__image--missing");
+        image.textContent = coupon ? `QR asociado\nCupón ${coupon.code}` : "QR sin cupón";
+        card.querySelector("[data-qr-show]").disabled = true;
+        card.querySelector("[data-qr-download]").disabled = true;
+        card.querySelector("[data-qr-share]").disabled = true;
+        continue;
+      }
+      let qrImageUrl;
+      try {
+        qrImageUrl = await buildQrImage(row.token_value);
+      } catch (error) {
+        console.error("[v0] No se pudo dibujar el QR guardado", error);
+        image.classList.add("qr-list-card__image--missing");
+        image.textContent = "QR no disponible";
+        continue;
+      }
       image.innerHTML = `<img src="${qrImageUrl}" alt="Código QR de ${escapeHtml(customerName)}" width="84" height="84">`;
       card.querySelector("[data-qr-show]").addEventListener("click", () => {
         el("qr-result-customer").textContent = customerName;
@@ -676,7 +707,7 @@
   async function loadCouponsTable() {
     const { data, error } = await client
       .from("coupons")
-      .select("id, code, discount_percent, status, issued_at, expires_at, customers(full_name)")
+      .select("id, code, discount_percent, status, issued_at, expires_at, customers(full_name), qr_cards(token_value)")
       .order("issued_at", { ascending: false })
       .limit(300);
 
@@ -696,15 +727,29 @@
           <td>${new Date(row.issued_at).toLocaleDateString("es-CO")}</td>
           <td>${new Date(row.expires_at).toLocaleDateString("es-CO")}</td>
           <td><span class="status-pill status-${row.status}">${translateStatus(row.status)}</span></td>
-          <td>${
-            row.status === "available"
-              ? `<button class="btn btn--ghost btn--small" data-mark-id="${row.id}">Marcar usado</button>`
-              : ""
-          }</td>
+          <td class="table-actions">
+            ${row.status === "available" ? `<button class="btn btn--ghost btn--small" data-mark-id="${row.id}">Marcar usado</button>` : ""}
+            ${row.qr_cards?.[0]?.token_value ? `<button class="btn btn--ghost btn--small" data-coupon-view="${row.qr_cards[0].token_value}">Ver QR</button><button class="btn btn--ghost btn--small" data-coupon-share="${row.qr_cards[0].token_value}">Compartir</button>` : ""}
+            <button class="btn btn--danger btn--small" data-coupon-delete="${row.id}">Eliminar</button>
+          </td>
         </tr>`
       )
       .join("");
 
+    tbody.querySelectorAll("[data-coupon-view]").forEach((btn) => btn.addEventListener("click", () => {
+      const url = `${new URL("../", window.location.href).toString()}?qr=${encodeURIComponent(btn.dataset.couponView)}`;
+      window.open(url, "_blank", "noopener");
+    }));
+    tbody.querySelectorAll("[data-coupon-share]").forEach((btn) => btn.addEventListener("click", async () => {
+      const url = `${new URL("../", window.location.href).toString()}?qr=${encodeURIComponent(btn.dataset.couponShare)}`;
+      if (navigator.share) await navigator.share({ title: "Cupón Closet de Erimar", url }); else await navigator.clipboard.writeText(url);
+    }));
+    tbody.querySelectorAll("[data-coupon-delete]").forEach((btn) => btn.addEventListener("click", async () => {
+      if (!confirm("¿Eliminar este cupón?")) return;
+      const { error: deleteError } = await client.from("coupons").delete().eq("id", btn.dataset.couponDelete);
+      if (deleteError) { alert("No se pudo eliminar el cupón."); return; }
+      loadCouponsTable(); loadQrCards();
+    }));
     tbody.querySelectorAll("[data-mark-id]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const { error: markError } = await client.rpc("mark_coupon_used", {
