@@ -84,8 +84,9 @@
           </div>
 
           <div class="coupon-footer">
-            <strong>Gracias por elegirnos ♡</strong>
-            <span>Closet de Erimar</span>
+            <strong>Gracias por elegirnos</strong>
+            <span>Válido hasta: <span data-field="expires"></span></span>
+            <span data-field="status-display">Disponible</span>
           </div>
         </div>
 
@@ -112,42 +113,6 @@
     <div class="shadow"></div>
   </div>
 
-  <div id="card-details-panel" class="card-details-panel hidden">
-    <div class="details-content">
-      <h2>Tu Cupón</h2>
-
-      <div class="detail-row">
-        <span class="label">Nombre:</span>
-        <span data-field="greeting-name"></span>
-      </div>
-
-      <div class="detail-row">
-        <span class="label">Descuento:</span>
-        <span data-field="discount-display"></span>
-      </div>
-
-      <div class="detail-row">
-        <span class="label">Código:</span>
-        <span data-field="code-display"></span>
-      </div>
-
-      <div class="detail-row">
-        <span class="label">Vigencia:</span>
-        <span data-field="expires"></span>
-      </div>
-
-      <div class="detail-row">
-        <span class="label">Estado:</span>
-        <span data-field="status-display"></span>
-      </div>
-      <div class="button-group">
-        <button class="btn btn--primary" type="button" data-action="copy-coupon">Copiar Cupón</button>
-        <button class="btn btn--secondary" type="button" data-action="descargar-qr">Descargar QR</button>
-        <button class="btn btn--secondary" type="button" data-action="compartir-qr">Compartir QR</button>
-        <button class="btn btn--link" type="button" data-action="open-terms">Términos y condiciones</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <div id="screen-returning" class="screen-panel hidden">
@@ -162,12 +127,6 @@
         <p class="coupon-label">de descuento en tu próxima compra</p>
         <p class="coupon-code" data-field="code"></p>
         <p class="coupon-status-note" data-field="status-note" hidden></p>
-
-        <div class="button-group">
-          <button class="btn btn--ghost" type="button" data-action="copy-coupon">Copiar mi cupón</button>
-          <button class="btn btn--ghost" type="button" data-action="descargar-qr">Descargar QR</button>
-          <button class="btn btn--ghost" type="button" data-action="compartir-qr">Compartir QR</button>
-        </div>
 
         <p class="coupon-expiry">Válido hasta: <span data-field="expires"></span></p>
       </div>

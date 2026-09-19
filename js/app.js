@@ -37,6 +37,7 @@
     root.querySelector("[data-field='greeting-name']").textContent = data.customer_name || "";
     root.querySelectorAll("[data-field='discount'], [data-field='discount-display']").forEach((field) => { field.textContent = `${data.discount_percent}%`; });
     root.querySelectorAll("[data-field='code'], [data-field='code-display']").forEach((field) => { field.textContent = data.code; });
+    root.querySelectorAll("[data-field='status-display']").forEach((field) => { field.textContent = data.status === "available" ? "Disponible" : data.status === "used" ? "Utilizado" : "Vencido"; });
     root.querySelectorAll("[data-field='expires']").forEach((field) => { field.textContent = formatDateEs(data.expires_at); });
     root.querySelectorAll("[data-field='status-display']").forEach((field) => { field.textContent = data.status === "available" ? "Disponible" : data.status === "used" ? "Utilizado" : "Expirado"; });
 
@@ -164,21 +165,11 @@
         showScreen("envelope");
 
         const envelope = document.getElementById("valentineCard");
-        const seal = document.getElementById("envelope-seal");
-        const card = document.getElementById("envelope-card");
-        const sparkles = document.getElementById("envelope-sparkles");
 
         function handleOpen() {
           envelope.removeEventListener("click", handleOpen);
           envelope.removeEventListener("keydown", handleKey);
-          window.ErimarAnimation.openEnvelope(
-            { envelope, seal, card, sparkles },
-            cfg,
-            () => {
-              document.getElementById("card-details-panel").classList.remove("hidden");
-              window.ErimarAnimation.setupActions();
-            }
-          );
+          envelope.classList.add("open");
         }
         function handleKey(e) {
           if (e.key === "Enter" || e.key === " ") {
@@ -194,9 +185,7 @@
       // Ya había abierto su sorpresa antes: mostramos el mismo
       // cupón directamente, sin repetir la animación de regalo.
       fillReveal(screens.returning, result);
-      setupCopyButton(screens.returning, result.code);
       showScreen("returning");
-      window.ErimarAnimation.setupActions();
     }
   }
 
