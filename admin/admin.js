@@ -55,9 +55,16 @@
     const email = el("login-email").value.trim();
     const password = el("login-password").value;
     const errorEl = el("login-error");
+    const submitBtn = el("login-submit");
     errorEl.hidden = true;
+    submitBtn.disabled = true;
+    submitBtn.setAttribute("aria-busy", "true");
+    submitBtn.setAttribute("aria-label", "Verificando acceso");
 
     const { error } = await client.auth.signInWithPassword({ email, password });
+    submitBtn.disabled = false;
+    submitBtn.removeAttribute("aria-busy");
+    submitBtn.removeAttribute("aria-label");
     if (error) {
       errorEl.textContent = "Correo o contraseña incorrectos.";
       errorEl.hidden = false;
