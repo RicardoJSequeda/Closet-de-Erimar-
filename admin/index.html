@@ -75,8 +75,7 @@
       <h2>Nueva clienta</h2>
       <form id="customer-form" class="stacked-form">
         <label>Nombre completo <input type="text" id="customer-name" required /></label>
-        <label>WhatsApp / teléfono <input type="text" id="customer-phone" /></label>
-        <label>Notas <textarea id="customer-notes" rows="2"></textarea></label>
+
         <button type="submit" class="btn btn--primary">Guardar clienta</button>
       </form>
     </div>
@@ -129,12 +128,9 @@
       <h2>Nueva campaña</h2>
       <form id="campaign-form" class="stacked-form">
         <label>Nombre <input type="text" id="campaign-name" required placeholder="Septiembre 2026" /></label>
-        <label>Vigencia del cupón (días)
-          <select id="campaign-duration">
-            <option value="15">15 días</option>
-            <option value="20" selected>20 días</option>
-            <option value="30">30 días</option>
-          </select>
+        <label>Vigencia del cupón
+          <input type="date" id="campaign-expires-on" required />
+          <small class="form-help">El cupón mostrará un contador hasta esta fecha.</small>
         </label>
         <fieldset class="tiers-fieldset">
           <legend>Distribución de cupones</legend>

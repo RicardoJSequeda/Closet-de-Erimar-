@@ -211,15 +211,9 @@
     el("customer-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const full_name = el("customer-name").value.trim();
-      const phone = el("customer-phone").value.trim();
-      const notes = el("customer-notes").value.trim();
       if (!full_name) return;
 
-      const { error } = await client.from("customers").insert({
-        full_name,
-        phone: phone || null,
-        notes: notes || null,
-      });
+      const { error } = await client.from("customers").insert({ full_name });
       if (error) {
         alert("No se pudo guardar la clienta.");
         console.error(error);
@@ -325,14 +319,17 @@
     el("campaign-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const name = el("campaign-name").value.trim();
-      const duration = parseInt(el("campaign-duration").value, 10);
+      const expiresOn = el("campaign-expires-on").value;
+      const today = new Date();
+      const expiry = new Date(`${expiresOn}T23:59:59`);
+      const duration = Math.max(1, Math.ceil((expiry - today) / 86400000));
       const t5 = parseInt(el("tier-5").value || "0", 10);
       const t10 = parseInt(el("tier-10").value || "0", 10);
       const t15 = parseInt(el("tier-15").value || "0", 10);
       const maxCoupons = t5 + t10 + t15;
 
-      if (!name || maxCoupons <= 0) {
-        alert("Revisa el nombre y la distribución de cupones.");
+      if (!name || !expiresOn || Number.isNaN(expiry.getTime()) || expiry <= today || maxCoupons <= 0) {
+        alert("Revisa el nombre, la fecha de vencimiento y la distribución de cupones.");
         return;
       }
 
@@ -355,6 +352,9 @@
         return;
       }
 
+      if (data.campaign_id) {
+        await client.from("campaigns").update({ expires_on: expiresOn }).eq("id", data.campaign_id);
+      }
       el("campaign-form").reset();
       el("tier-5").value = 6;
       el("tier-10").value = 3;
@@ -545,7 +545,7 @@
     if (!container) return;
     const { data, error } = await client
       .from("qr_cards")
-      .select("id, active, created_at, customers(full_name), campaigns(name), coupons!inner(id, code, status, expires_at)")
+      .select("id, token_value, active, created_at, customers(full_name), campaigns(name), coupons!inner(id, code, status, expires_at)")
       .order("created_at", { ascending: false });
     if (error) { console.error(error); container.innerHTML = '<p class="empty-state">No se pudieron cargar los QR.</p>'; return; }
     qrCardsCache = data || [];
@@ -701,7 +701,7 @@
   async function loadCouponsTable() {
     const { data, error } = await client
       .from("coupons")
-      .select("id, code, discount_percent, status, issued_at, expires_at, customers(full_name)")
+      .select("id, code, discount_percent, status, issued_at, expires_at, customers(full_name), qr_cards(token_value)")
       .order("issued_at", { ascending: false })
       .limit(300);
 
@@ -721,15 +721,29 @@
           <td>${new Date(row.issued_at).toLocaleDateString("es-CO")}</td>
           <td>${new Date(row.expires_at).toLocaleDateString("es-CO")}</td>
           <td><span class="status-pill status-${row.status}">${translateStatus(row.status)}</span></td>
-          <td>${
-            row.status === "available"
-              ? `<button class="btn btn--ghost btn--small" data-mark-id="${row.id}">Marcar usado</button>`
-              : ""
-          }</td>
+          <td class="table-actions">
+            ${row.status === "available" ? `<button class="btn btn--ghost btn--small" data-mark-id="${row.id}">Marcar usado</button>` : ""}
+            ${row.qr_cards?.[0]?.token_value ? `<button class="btn btn--ghost btn--small" data-coupon-view="${row.qr_cards[0].token_value}">Ver QR</button><button class="btn btn--ghost btn--small" data-coupon-share="${row.qr_cards[0].token_value}">Compartir</button>` : ""}
+            <button class="btn btn--danger btn--small" data-coupon-delete="${row.id}">Eliminar</button>
+          </td>
         </tr>`
       )
       .join("");
 
+    tbody.querySelectorAll("[data-coupon-view]").forEach((btn) => btn.addEventListener("click", () => {
+      const url = `${new URL("../", window.location.href).toString()}?qr=${encodeURIComponent(btn.dataset.couponView)}`;
+      window.open(url, "_blank", "noopener");
+    }));
+    tbody.querySelectorAll("[data-coupon-share]").forEach((btn) => btn.addEventListener("click", async () => {
+      const url = `${new URL("../", window.location.href).toString()}?qr=${encodeURIComponent(btn.dataset.couponShare)}`;
+      if (navigator.share) await navigator.share({ title: "Cupón Closet de Erimar", url }); else await navigator.clipboard.writeText(url);
+    }));
+    tbody.querySelectorAll("[data-coupon-delete]").forEach((btn) => btn.addEventListener("click", async () => {
+      if (!confirm("¿Eliminar este cupón?")) return;
+      const { error: deleteError } = await client.from("coupons").delete().eq("id", btn.dataset.couponDelete);
+      if (deleteError) { alert("No se pudo eliminar el cupón."); return; }
+      loadCouponsTable(); loadQrCards();
+    }));
     tbody.querySelectorAll("[data-mark-id]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const { error: markError } = await client.rpc("mark_coupon_used", {
